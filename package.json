@@ -1,0 +1,44 @@
+{
+  "name": "@yydsxwh/shared",
+  "version": "0.1.0",
+  "description": "公司公共代码：多产品共用的类型、工具、i18n、校验与客户端环境探测",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yydsxwh/shared.git"
+  },
+  "sideEffects": false,
+  "exports": {
+    "./package.json": "./package.json",
+    "./*": "./src/*.ts"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test \"test/**/*.test.ts\"",
+    "lint": "eslint"
+  },
+  "peerDependencies": {
+    "opencc-js": "^1.4.1"
+  },
+  "peerDependenciesMeta": {
+    "opencc-js": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@types/node": "^20",
+    "eslint": "^9",
+    "opencc-js": "^1.4.1",
+    "tsx": "^4.23.8",
+    "typescript": "^5",
+    "typescript-eslint": "^8.46.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
