@@ -1,6 +1,6 @@
 {
   "name": "@yydsxwh/shared",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "公司公共代码：多产品共用的类型、工具、i18n、校验、platform 契约与客户端环境探测",
   "license": "UNLICENSED",
   "repository": {

@@ -66,22 +66,39 @@ App → 产品后端（验 Session）→ Platform
 
 客户端禁止持有 `PLATFORM_SERVICE_TOKEN` 或 OSS 长期密钥。
 
-## 下一轮需要从 account 拿到的事实
+## Owner 已拍板的公开标识（2026-09-20）
 
-| 项 | 用途 | 状态 |
+这些是架构决策，**不是** Secret，也**不是**「已经验过 Discovery」。
+
+| 项 | 正式值 | 状态 |
 |---|---|---|
-| issuer | 校验 ID Token / assertion | `NEEDS_ACCOUNT_INTEGRATION` |
-| JWKS URL | 验 RS256 | `NEEDS_ACCOUNT_INTEGRATION` |
-| audience | 各产品 client 的 aud | `NEEDS_ACCOUNT_INTEGRATION` |
-| 全局 sub 规则 | 确认 `usr_*` 形态与不可变约束 | 文档已知；接口细节待联调 |
-| service / user assertion 策略 | 是否由 account 签发短期 assertion，或产品后端签名 JWT | `NEEDS_ACCOUNT_INTEGRATION` |
+| Account 站点 | `https://account.yydsxwh.com` | Owner 拍板，系统已上线 |
+| issuer | `https://account.yydsxwh.com` | Owner 拍板 |
+| JWKS URL | `https://account.yydsxwh.com/.well-known/jwks.json` | Owner 拍板定义 |
+| Platform 预发 | `https://api-staging.yydsxwh.com` | Owner 拍板；DNS/TLS 未由本 Agent 配置 |
+| Platform 生产 / audience | `https://api.yydsxwh.com` | Owner 拍板。audience **不是**产品 client_id |
+| 长期 assertion | `iss=account` `aud=https://api.yydsxwh.com` `sub=usr_*` | contract only |
+
+## 仍要打开 account 仓库才能确认（不要猜源码）
+
+| 项 | 状态 |
+|---|---|
+| Discovery 实际返回是否与上表一致 | `NEEDS_ACCOUNT_INTEGRATION` |
+| JWKS 行为（轮换、alg、缓存） | `NEEDS_ACCOUNT_INTEGRATION` |
+| account 现有实现是否接受 Platform audience | `NEEDS_ACCOUNT_INTEGRATION` |
+| User Assertion / Token Exchange 是否已有 | `NEEDS_ACCOUNT_INTEGRATION` |
+| Platform 对 account token 验签实现 | `NEEDS_ACCOUNT_INTEGRATION`（本轮不写校验器） |
+| 产品 Session 与 account OIDC 打通 | `NEEDS_ACCOUNT_INTEGRATION` |
+
+常量入口：`@yydsxwh/shared/contracts/identity`。
 
 ## 明确不要做的事
 
 - 不要把登录系统迁进 platform
 - 不要在 platform 或任一产品里再造一套统一身份
 - 在 account 接入完成前，不要把两个站点的用户数据合并
-- 不要猜测 account 的 Discovery 地址或密钥
+- 不要猜测 account Discovery **实际响应**；公开 URL 已拍板，行为要联调
+- 不要擅自改 account 源码来迁就 Platform audience
 
 ## 仍被身份接入阻塞的事项
 
