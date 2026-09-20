@@ -70,11 +70,21 @@ const release = await platform.releases.getLatest("rishi", { platform: "ANDROID"
 
 错误一律是 `PlatformApiError`，按 `error.code` 分支，不要 match 文案。
 
+### Design System（第一批）
+
+`@yydsxwh/shared/design/tokens` —— 颜色语义、间距、圆角、字号阶梯、控件尺寸。
+
+原则是 **品牌一致，产品体验独立**：各端共享同一套品牌变量，但不强求长得一样，
+具体组件与布局仍归各产品。token 名与主站现有 CSS 变量（`--ink`、`--muted`、
+`--brand`、`--line`）对齐，接入时不需要改样式表；装扮产品的运行时覆盖依然生效。
+
+商城页、课程页、论坛页、工作室页、产品营销页**不进这里**。
+
 ### 身份边界类型
 
 `@yydsxwh/shared/auth/identity` 只有**类型与客户端接口**：`UserSub`、`OidcIdTokenClaims`、
 `SessionUser`、`AuthClient`。这里不实现任何身份系统——用户身份、OIDC Server、密码、
-Session、登录验证码业务最终属于独立的 account 仓库。详见仓库内 `NEEDS_ACCOUNT_MIGRATION` 说明。
+Session、登录验证码业务最终属于独立的 account 仓库。详见 [`NEEDS_ACCOUNT_MIGRATION.md`](./NEEDS_ACCOUNT_MIGRATION.md)。
 
 ## 不放这里
 
@@ -95,7 +105,7 @@ Session、登录验证码业务最终属于独立的 account 仓库。详见仓�
 // package.json
 {
   "dependencies": {
-    "@yydsxwh/shared": "git+https://github.com/yydsxwh/shared.git#v0.2.0"
+    "@yydsxwh/shared": "git+https://github.com/yydsxwh/shared.git#v0.3.0"
   }
 }
 ```
