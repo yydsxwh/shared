@@ -7,6 +7,7 @@
  */
 
 import { PlatformHttpClient, type PlatformClientOptions } from "./http";
+import { AiClient } from "./ai";
 import { CatalogClient } from "./catalog";
 import { PaymentClient } from "./payments";
 import { ReleaseClient } from "./releases";
@@ -14,6 +15,7 @@ import { StorageClient } from "./storage";
 
 export { PlatformApiError, PlatformHttpClient } from "./http";
 export type { PlatformClientOptions, RequestOptions } from "./http";
+export { AiClient } from "./ai";
 export { CatalogClient } from "./catalog";
 export { PaymentClient } from "./payments";
 export { ReleaseClient } from "./releases";
@@ -21,6 +23,7 @@ export { StorageClient } from "./storage";
 
 export type PlatformClient = {
   http: PlatformHttpClient;
+  ai: AiClient;
   storage: StorageClient;
   catalog: CatalogClient;
   releases: ReleaseClient;
@@ -41,6 +44,7 @@ function fromHttp(
 ): PlatformClient {
   return {
     http,
+    ai: new AiClient(http),
     storage: new StorageClient(http),
     catalog: new CatalogClient(http),
     releases: new ReleaseClient(http),

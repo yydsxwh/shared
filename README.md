@@ -45,6 +45,7 @@ platform API 契约与 SDK、Design Tokens。这里是这些代码的唯一来�
 | 子路径 | 内容 |
 |---|---|
 | `contracts/version` | API 版本与统一请求头名 |
+| `contracts/ai` | AI 对话、用途路由、Provider 状态、用量统计 |
 | `contracts/error` | 统一错误码、错误体、HTTP 状态映射 |
 | `contracts/storage` | 文件、namespace 策略、签名上传 / 分片 / 下载 |
 | `contracts/catalog` | 产品目录（机器可读事实，不含运营文案） |
@@ -66,6 +67,12 @@ const platform = createPlatformClient({
 });
 
 const release = await platform.releases.getLatest("rishi", { platform: "ANDROID" });
+
+// AI：只说用途，不碰 Provider / Base URL / API Key
+const reply = await platform.ai.chat({
+  purpose: "translate",
+  messages: [{ role: "user", content: "网课资料" }],
+});
 ```
 
 错误一律是 `PlatformApiError`，按 `error.code` 分支，不要 match 文案。
@@ -105,7 +112,7 @@ Session、登录验证码业务最终属于独立的 account 仓库。详见 [`N
 // package.json
 {
   "dependencies": {
-    "@yydsxwh/shared": "git+https://github.com/yydsxwh/shared.git#v0.3.0"
+    "@yydsxwh/shared": "git+https://github.com/yydsxwh/shared.git#v0.4.0"
   }
 }
 ```
