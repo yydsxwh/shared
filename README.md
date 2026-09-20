@@ -96,7 +96,11 @@ const reply = await platform.ai.chat({
 `@yydsxwh/shared/auth/identity` 只有**类型与客户端接口**：`UserSub`、`OidcIdTokenClaims`、
 `SessionUser`、`AuthClient`。这里不实现任何身份系统。
 
-**Account 已上线。** 产品尚未完成 OIDC 接入（`NEEDS_ACCOUNT_INTEGRATION`），
+**Account 已上线：** `https://account.yydsxwh.com`。
+
+Owner 拍板的公开标识在 `@yydsxwh/shared/contracts/identity`：
+issuer / JWKS URL / Platform audience（`https://api.yydsxwh.com`）。
+产品尚未完成 OIDC 接入（`NEEDS_ACCOUNT_INTEGRATION`），
 不是「账号中心还不存在」。详见 [`NEEDS_ACCOUNT_INTEGRATION.md`](./NEEDS_ACCOUNT_INTEGRATION.md)。
 
 日事等新产品不要在 shared 里放 Task / 课表 / Reminder 领域类型；那些属于产品仓库。
@@ -122,7 +126,7 @@ Payments 也已有 SDK，但日事第一期不必接支付。
 // package.json
 {
   "dependencies": {
-        "@yydsxwh/shared": "git+https://github.com/yydsxwh/shared.git#v0.5.0"
+        "@yydsxwh/shared": "git+https://github.com/yydsxwh/shared.git#v0.5.1"
   }
 }
 ```
@@ -143,7 +147,7 @@ import { yuanToCents } from "@yydsxwh/shared/utils/money";
 
 以 git tag 固定版本，改动后打新 tag，再由各站点更新依赖并提交 lockfile。不要把使用方指到分支上。
 
-当前版本：`v0.5.0`（仍是单包 git 依赖）。产品数量变多后再拆正式 registry 包，本轮不迁发布基础设施。
+当前版本：`v0.5.1`（仍是单包 git 依赖）。产品数量变多后再拆正式 registry 包，本轮不迁发布基础设施。
 
 ### 长期 Package Roadmap（PLANNED，本轮不迁移）
 

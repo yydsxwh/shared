@@ -21,9 +21,37 @@
  * - 可信产品后端签名的短期 JWT
  * - 标准 token exchange
  *
- * 落地校验需要 account 的 issuer / JWKS / audience，见
- * `NEEDS_ACCOUNT_INTEGRATION.md`。
+ * Owner 已拍板公开标识（2026-09-20）：
+ * issuer / JWKS URL / Platform audience。这些是资源标识，不是 Secret。
+ * Discovery 是否真返回这些值、JWKS 行为、aud 兼容性：
+ * `NEEDS_ACCOUNT_INTEGRATION`（要打开 account 仓库联调，不要猜源码）。
  */
+
+/** Account 站点根。Owner 拍板，已上线 */
+export const ACCOUNT_PUBLIC_ORIGIN = "https://account.yydsxwh.com";
+
+/** OIDC issuer。Owner 拍板 */
+export const ACCOUNT_ISSUER = "https://account.yydsxwh.com";
+
+/**
+ * JWKS URL。Owner 拍板的正式定义。
+ * 该 URL 现在是否按标准返回密钥：`NEEDS_ACCOUNT_INTEGRATION`。
+ */
+export const ACCOUNT_JWKS_URI =
+  "https://account.yydsxwh.com/.well-known/jwks.json";
+
+/** Platform 预发。Owner 拍板。DNS/TLS 是否已挂上：仍要运维执行 */
+export const PLATFORM_STAGING_ORIGIN = "https://api-staging.yydsxwh.com";
+
+/** Platform 生产资源标识。Owner 拍板。当前五模块仍是 NOT_DEPLOYED */
+export const PLATFORM_PRODUCTION_ORIGIN = "https://api.yydsxwh.com";
+
+/**
+ * Platform 作为资源服务器的 audience。
+ * 用生产资源标识，不要把 andyyyds / softwarelist / rishi 的 client_id 当成 aud。
+ * 预发域名不同，长期身份模型仍用这个 aud。
+ */
+export const PLATFORM_RESOURCE_AUDIENCE = "https://api.yydsxwh.com";
 
 /** 兼容头：由**已通过服务认证**的产品后端传递最终用户标识 */
 export const PLATFORM_ACTOR_HEADER = "x-platform-actor";
@@ -60,16 +88,22 @@ export type UserAssertionEnvelope = {
 };
 
 /**
- * 未来 platform 校验 account assertion 时需要的最小配置。
- * 值从环境变量读取，不得写入 Git。
- *
- * NEEDS_ACCOUNT_INTEGRATION
+ * platform 校验 account assertion 时的配置形状。
+ * 公开 URL 可用上面的常量作默认；验签实现仍是
+ * `NEEDS_ACCOUNT_INTEGRATION`，本轮不写校验器。
  */
 export type AccountIntegrationConfig = {
   issuer: string;
   jwksUri: string;
+  /** 必须是 Platform 资源标识，不是产品 client_id */
   audience: string | string[];
   clockSkewSec?: number;
+};
+
+export const ACCOUNT_INTEGRATION_DEFAULTS: AccountIntegrationConfig = {
+  issuer: ACCOUNT_ISSUER,
+  jwksUri: ACCOUNT_JWKS_URI,
+  audience: PLATFORM_RESOURCE_AUDIENCE,
 };
 
 export const ACCOUNT_INTEGRATION_REQUIREMENTS = [
