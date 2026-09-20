@@ -1,19 +1,23 @@
 /**
  * 身份边界类型。
  *
- * 用户身份、注册登录、OIDC Server、密码、Session、验证码业务逻辑，最终都属于
- * 独立的 account 仓库。本文件只定义各产品面向身份时用到的**类型与客户端接口**，
- * 不实现任何身份系统，也不要在这里长出第二套统一身份。
+ * Account 已是公司正式 Identity Provider：OAuth 2.0、OIDC、Authorization Code +
+ * PKCE、Discovery、JWKS、RS256 ID Token、UserInfo、Refresh Token Rotation、
+ * Session、Security、全局不可变 `usr_*` sub。
+ *
+ * 本文件只定义各产品面向身份时用到的**类型与客户端接口**，
+ * 不实现账号系统，也不要在这里或 platform 里再造第二套统一身份。
  *
  * 目标形态：产品 → OIDC → account。
  *
- * NEEDS_ACCOUNT_MIGRATION：
- * 目前主站与软件专栏各自持有 cookie session、密码校验、短信与微信登录实现。
- * account 仓库建立后，这些实现迁走，产品改为拿本文件的 SessionUser 与
- * AuthClient 接入，`userId` 换成全局 `sub`，接口形状不变。
+ * NEEDS_ACCOUNT_INTEGRATION：
+ * 主站与软件专栏目前仍各持 cookie session、密码、短信与微信登录实现，
+ * **还没有**切到 account OIDC。缺的是产品接入联调，不是再建一个账号中心。
+ * 接入后这些实现迁走，产品改用本文件的 SessionUser 与 AuthClient，
+ * `userId` 换成全局 `sub`，接口形状不变。
  */
 
-/** account 签发的全局用户标识；account 上线前各产品沿用自己的 user id */
+/** account 签发的全局用户标识；产品尚未接 OIDC 时仍可能是站点本地 user id */
 export type UserSub = string;
 
 /** OIDC 标准 claim 的子集，只列各产品确实会用到的 */
@@ -69,8 +73,8 @@ export type AuthMethodsInfo = {
 /**
  * 产品与身份系统之间的最小接口。
  *
- * 当前由各产品用自己的 cookie session 实现；account 上线后换成 OIDC 实现，
- * 调用方代码不用改。实现放产品或 account SDK，不要放这里。
+ * 当前由各产品用自己的 cookie session 实现；切到 account OIDC 后
+ * 换成 OIDC 实现，调用方代码不用改。实现放产品或 account SDK，不要放这里。
  */
 export type AuthClient = {
   /** 未登录返回 null，不要抛异常 */

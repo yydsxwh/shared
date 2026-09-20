@@ -46,7 +46,10 @@ export type PlatformClientOptions = {
   serviceToken: string;
   /** 调用方标识，platform 用它做配额与审计 */
   clientId: string;
-  /** 代表哪个最终用户发起；服务端后台任务可不填 */
+  /**
+   * 代表哪个最终用户发起；服务端后台任务可不填。
+   * 只能由**已验证产品 Session 的后端**填写，禁止从浏览器原样转发未校验的用户 id。
+   */
   actorId?: string | null;
   timeoutMs?: number;
   /** 便于测试注入；默认用全局 fetch */

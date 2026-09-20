@@ -6,10 +6,11 @@
 platform API 契约与 SDK、Design Tokens。这里是这些代码的唯一来源，各站点只通过依赖引用，
 不再各拷一份。
 
-- **Account** 管身份（用户、OIDC、Session、密码、验证码业务）
-- **Platform** 管公共在线能力（Storage / Releases / Catalog / Payments）
+- **Account** 管身份（已上线的 IdP：OIDC / OAuth / 全局 `usr_*` sub）
+- **Platform** 管公共在线能力（AI / Storage / Releases / Catalog / Payments）
 - **Shared** 管公共代码（本仓库）
 - **Product** 管自己的业务（Andyyyds / softwarelist / 日事 …）
+- **Studio** 管运营和配置（UI 在主站，实现不在 Studio）
 
 ## 已提供
 
@@ -45,6 +46,9 @@ platform API 契约与 SDK、Design Tokens。这里是这些代码的唯一来�
 | 子路径 | 内容 |
 |---|---|
 | `contracts/version` | API 版本与统一请求头名 |
+| `contracts/identity` | Verified User Context、assertion 扩展点、account 接入配置形状 |
+| `contracts/service` | Service Identity、scope、轮换 / 吊销语义 |
+| `contracts/observability` | 请求日志字段与未来 metrics/tracing 预留名 |
 | `contracts/ai` | AI 对话、用途路由、Provider 状态、用量统计 |
 | `contracts/error` | 统一错误码、错误体、HTTP 状态映射 |
 | `contracts/storage` | 文件、namespace 策略、签名上传 / 分片 / 下载 |
@@ -90,8 +94,14 @@ const reply = await platform.ai.chat({
 ### 身份边界类型
 
 `@yydsxwh/shared/auth/identity` 只有**类型与客户端接口**：`UserSub`、`OidcIdTokenClaims`、
-`SessionUser`、`AuthClient`。这里不实现任何身份系统——用户身份、OIDC Server、密码、
-Session、登录验证码业务最终属于独立的 account 仓库。详见 [`NEEDS_ACCOUNT_MIGRATION.md`](./NEEDS_ACCOUNT_MIGRATION.md)。
+`SessionUser`、`AuthClient`。这里不实现任何身份系统。
+
+**Account 已上线。** 产品尚未完成 OIDC 接入（`NEEDS_ACCOUNT_INTEGRATION`），
+不是「账号中心还不存在」。详见 [`NEEDS_ACCOUNT_INTEGRATION.md`](./NEEDS_ACCOUNT_INTEGRATION.md)。
+
+日事等新产品不要在 shared 里放 Task / 课表 / Reminder 领域类型；那些属于产品仓库。
+当前 `platform-client` 已覆盖日事会用到的公共能力：AI、Storage、Catalog、Releases。
+Payments 也已有 SDK，但日事第一期不必接支付。
 
 ## 不放这里
 
@@ -112,7 +122,7 @@ Session、登录验证码业务最终属于独立的 account 仓库。详见 [`N
 // package.json
 {
   "dependencies": {
-    "@yydsxwh/shared": "git+https://github.com/yydsxwh/shared.git#v0.4.0"
+        "@yydsxwh/shared": "git+https://github.com/yydsxwh/shared.git#v0.5.0"
   }
 }
 ```
@@ -132,6 +142,19 @@ import { yuanToCents } from "@yydsxwh/shared/utils/money";
 ### 升级版本
 
 以 git tag 固定版本，改动后打新 tag，再由各站点更新依赖并提交 lockfile。不要把使用方指到分支上。
+
+当前版本：`v0.5.0`（仍是单包 git 依赖）。产品数量变多后再拆正式 registry 包，本轮不迁发布基础设施。
+
+### 长期 Package Roadmap（PLANNED，本轮不迁移）
+
+| 未来包 | 从本仓库拆出 |
+|---|---|
+| `@yydsxwh/types` | types / validation / utils |
+| `@yydsxwh/platform-client` | contracts + platform-client |
+| `@yydsxwh/auth-client` | auth/identity 与未来 OIDC 客户端 |
+| `@yydsxwh/design-system` | design tokens 与后续 primitives |
+
+发布方式：正式 package registry + SemVer。现在继续 `git+…#vX.Y.Z` 即可。
 
 ## 开发
 
