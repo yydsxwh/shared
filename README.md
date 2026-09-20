@@ -2,8 +2,14 @@
 
 公司公共代码仓库，npm 包名 `@yydsxwh/shared`。
 
-多个软件产品共享的 **类型、工具、i18n、校验、客户端环境探测**。这里是这些代码的唯一来源：
-各站点只通过依赖引用，不再各拷一份。
+四层边界中的 **Shared 层：多仓库在编译期共同依赖的代码**——类型、工具、i18n、校验、
+platform API 契约与 SDK、Design Tokens。这里是这些代码的唯一来源，各站点只通过依赖引用，
+不再各拷一份。
+
+- **Account** 管身份（用户、OIDC、Session、密码、验证码业务）
+- **Platform** 管公共在线能力（Storage / Releases / Catalog / Payments）
+- **Shared** 管公共代码（本仓库）
+- **Product** 管自己的业务（Andyyyds / softwarelist / 日事 …）
 
 ## 已提供
 
@@ -25,16 +31,75 @@
 | `@yydsxwh/shared/i18n/resolve-locale` | Accept-Language / cookie 解析 |
 | `@yydsxwh/shared/i18n/opencc` | 简繁转换（服务端） |
 | `@yydsxwh/shared/i18n/source-hash` | 源文指纹，决定译文是否过期 |
+| `@yydsxwh/shared/types/media` | 媒体类型判定、MIME 白名单、上传大小上限 |
 | `@yydsxwh/shared/client/wechat-env` | 微信 / 移动端 / Capacitor 环境探测 |
 | `@yydsxwh/shared/client/auth-channel-preference` | 登录渠道默认偏好 |
+| `@yydsxwh/shared/client/wechat-pay-trade` | 按 UA 纠正微信支付形态 |
+| `@yydsxwh/shared/client/wechat-jsapi-pay` | 微信内 JSAPI 调起（浏览器端） |
+
+### platform API 契约
+
+`@yydsxwh/shared/contracts/*` 是 platform 对外接口的唯一类型来源，platform 实现与各产品
+调用都以它为准。
+
+| 子路径 | 内容 |
+|---|---|
+| `contracts/version` | API 版本与统一请求头名 |
+| `contracts/ai` | AI 对话、用途路由、Provider 状态、用量统计 |
+| `contracts/error` | 统一错误码、错误体、HTTP 状态映射 |
+| `contracts/storage` | 文件、namespace 策略、签名上传 / 分片 / 下载 |
+| `contracts/catalog` | 产品目录（机器可读事实，不含运营文案） |
+| `contracts/releases` | Release / ReleaseAsset / latest 查询 / 下载 |
+| `contracts/payments` | 支付单、支付动作、退款、履约事件 |
+
+### platform SDK
+
+`@yydsxwh/shared/platform-client` —— 产品不要自己手写 fetch 字符串。
+
+```ts
+import { createPlatformClient } from "@yydsxwh/shared/platform-client/index";
+
+// 只在服务端构造：serviceToken 绝不能进浏览器包
+const platform = createPlatformClient({
+  baseUrl: process.env.PLATFORM_API_URL!,
+  serviceToken: process.env.PLATFORM_SERVICE_TOKEN!,
+  clientId: "andyyyds",
+});
+
+const release = await platform.releases.getLatest("rishi", { platform: "ANDROID" });
+
+// AI：只说用途，不碰 Provider / Base URL / API Key
+const reply = await platform.ai.chat({
+  purpose: "translate",
+  messages: [{ role: "user", content: "网课资料" }],
+});
+```
+
+错误一律是 `PlatformApiError`，按 `error.code` 分支，不要 match 文案。
+
+### Design System（第一批）
+
+`@yydsxwh/shared/design/tokens` —— 颜色语义、间距、圆角、字号阶梯、控件尺寸。
+
+原则是 **品牌一致，产品体验独立**：各端共享同一套品牌变量，但不强求长得一样，
+具体组件与布局仍归各产品。token 名与主站现有 CSS 变量（`--ink`、`--muted`、
+`--brand`、`--line`）对齐，接入时不需要改样式表；装扮产品的运行时覆盖依然生效。
+
+商城页、课程页、论坛页、工作室页、产品营销页**不进这里**。
+
+### 身份边界类型
+
+`@yydsxwh/shared/auth/identity` 只有**类型与客户端接口**：`UserSub`、`OidcIdTokenClaims`、
+`SessionUser`、`AuthClient`。这里不实现任何身份系统——用户身份、OIDC Server、密码、
+Session、登录验证码业务最终属于独立的 account 仓库。详见 [`NEEDS_ACCOUNT_MIGRATION.md`](./NEEDS_ACCOUNT_MIGRATION.md)。
 
 ## 不放这里
 
 | 不放 | 归属 |
 |---|---|
 | Prisma、会话、`next/headers`、服务端密钥 | 各站点或 `platform` |
-| OSS / 存储、支付、短信、登录实现 | `platform`（后续阶段） |
-| 账号体系、OIDC、角色申请审批流 | 独立 account 仓库 |
+| OSS / 支付 / 短信的**服务端实现**与任何密钥 | `platform` |
+| 账号体系、OIDC Server、密码、Session、验证码业务 | 独立 account 仓库 |
 | 商城、优惠券、分销、工作室、门户 CMS | 主站 `Andyyyds` |
 | 装扮 / 主题 / 首页挂件 | `@andyyyds/decorate` |
 | 各站点自己的产品目录内容与页面文案 | 对应站点 |
@@ -47,7 +112,7 @@
 // package.json
 {
   "dependencies": {
-    "@yydsxwh/shared": "github:yydsxwh/shared#v0.1.0"
+    "@yydsxwh/shared": "git+https://github.com/yydsxwh/shared.git#v0.4.0"
   }
 }
 ```
