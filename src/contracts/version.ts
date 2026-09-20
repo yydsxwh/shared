@@ -18,8 +18,14 @@ export const PLATFORM_SERVICE_TOKEN_HEADER = "authorization";
 
 /**
  * 代表最终用户发起时带上的用户标识。
- * 现阶段是各站点自己的 user id；account 上线后换成全局 user sub，
- * 头名称不变，调用方无需再改一次。
+ *
+ * **不能被浏览器直接信任。** 只有 Bearer 服务凭证验证通过后，
+ * platform 才接受这个头（由产品后端在验过自己的 Session / OIDC 之后填写）。
+ *
+ * Account 已是正式 IdP。产品完成 OIDC 接入后，这里应传全局 `usr_*` sub；
+ * 头名称不变。尚未接入的站点仍可能传本地 user id。
+ *
+ * 长期见 `contracts/identity` 的 Verified User Context / assertion 扩展点。
  */
 export const PLATFORM_ACTOR_HEADER = "x-platform-actor";
 
