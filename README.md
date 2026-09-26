@@ -20,6 +20,7 @@ platform API 契约与 SDK、Design Tokens。这里是这些代码的唯一来�
 | `@yydsxwh/shared/types/domain` | `CourseStatus` / `OrderStatus` / `LessonType` / `Merchant*` 等领域类型 |
 | `@yydsxwh/shared/types/product` | 可售产品类型、详情页与支付回跳路径 |
 | `@yydsxwh/shared/types/software-product` | 软件产品卡片的数据形状（目录内容仍由各站点维护） |
+| `@yydsxwh/shared/products/registry` | 产品稳定入口。导航用这份静态表，不要请求主站 `/api/products` |
 | `@yydsxwh/shared/utils/format` | 价格、时长、slug、订单号 |
 | `@yydsxwh/shared/utils/money` | 元 / 分换算与校验 |
 | `@yydsxwh/shared/utils/referral-code` | 邀请码规范化与校验 |
@@ -147,7 +148,8 @@ import { yuanToCents } from "@yydsxwh/shared/utils/money";
 
 以 git tag 固定版本，改动后打新 tag，再由各站点更新依赖并提交 lockfile。不要把使用方指到分支上。
 
-当前版本：`v0.5.1`（仍是单包 git 依赖）。产品数量变多后再拆正式 registry 包，本轮不迁发布基础设施。
+当前版本：`0.6.0`（`package.json`）。已经打过的 git tag 仍是 `v0.5.1`，生产依赖继续钉这个 tag。
+`products/registry` 从 0.6.0 开始。等某个产品要引用它时再打 `v0.6.0`，不要把未打 tag 的 `main` 写进生产依赖。
 
 ### 长期 Package Roadmap（PLANNED，本轮不迁移）
 
