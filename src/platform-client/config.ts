@@ -143,6 +143,11 @@ export class ConfigClient {
   exportMetadata(): Promise<{ entries: ConfigExportEntry[]; revision: number }> {
     return this.http.request("/config/export");
   }
+
+  /** 迁移脚本记一条 CONFIG_MIGRATION 审计；detail 里不要放 Secret */
+  noteMigration(detail: string): Promise<void> {
+    return this.http.request("/config/migration-note", { method: "POST", json: { detail } });
+  }
 }
 
 // ---------------------------------------------------------------------------
