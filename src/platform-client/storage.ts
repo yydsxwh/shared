@@ -14,6 +14,9 @@ import type {
   ProxyUploadFields,
   SignMultipartPartsRequest,
   SignMultipartPartsResponse,
+  StorageHealth,
+  StorageSettingsView,
+  UpdateStorageSettingsRequest,
 } from "../contracts/storage";
 import type { PlatformHttpClient } from "./http";
 
@@ -106,5 +109,23 @@ export class StorageClient {
     return this.http.request(`/storage/files/${encodeURIComponent(fileId)}`, {
       method: "DELETE",
     });
+  }
+
+  /** 存储健康。响应里不会出现长期密钥。 */
+  health(): Promise<StorageHealth> {
+    return this.http.request("/storage/health");
+  }
+
+  /** 连接、上传、读取探测。探测对象会在服务端删除。 */
+  testHealth(): Promise<StorageHealth> {
+    return this.http.request("/storage/health/test", { method: "POST", json: {} });
+  }
+
+  getSettings(): Promise<StorageSettingsView> {
+    return this.http.request("/storage/settings");
+  }
+
+  updateSettings(input: UpdateStorageSettingsRequest): Promise<StorageSettingsView> {
+    return this.http.request("/storage/settings", { method: "POST", json: input });
   }
 }
