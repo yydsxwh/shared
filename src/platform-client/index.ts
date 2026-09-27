@@ -10,6 +10,7 @@ import { PlatformHttpClient } from "./http";
 import type { PlatformClientOptions } from "./http";
 import { AiClient } from "./ai";
 import { CatalogClient } from "./catalog";
+import { ConfigClient } from "./config";
 import { PaymentClient } from "./payments";
 import { ReleaseClient } from "./releases";
 import { StorageClient } from "./storage";
@@ -18,6 +19,8 @@ export { PlatformApiError, PlatformHttpClient } from "./http";
 export type { PlatformClientOptions, RequestOptions } from "./http";
 export { AiClient } from "./ai";
 export { CatalogClient } from "./catalog";
+export { ConfigClient, ConfigResolver, describeConfigState } from "./config";
+export type { ConfigResolverOptions, ConfigSnapshotStore } from "./config";
 export { PaymentClient } from "./payments";
 export { ReleaseClient } from "./releases";
 export { StorageClient } from "./storage";
@@ -26,6 +29,7 @@ export type PlatformClient = {
   http: PlatformHttpClient;
   ai: AiClient;
   storage: StorageClient;
+  config: ConfigClient;
   catalog: CatalogClient;
   releases: ReleaseClient;
   payments: PaymentClient;
@@ -47,6 +51,7 @@ function fromHttp(
     http,
     ai: new AiClient(http),
     storage: new StorageClient(http),
+    config: new ConfigClient(http),
     catalog: new CatalogClient(http),
     releases: new ReleaseClient(http),
     payments: new PaymentClient(http),

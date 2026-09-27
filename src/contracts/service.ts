@@ -20,6 +20,8 @@ export const PLATFORM_SERVICE_SCOPES = [
   "catalog",
   "releases",
   "payments",
+  /** 配置中心的管理操作。产品读取自己的有效配置不需要它。 */
+  "config",
 ] as const;
 
 export type PlatformServiceScope = (typeof PLATFORM_SERVICE_SCOPES)[number];

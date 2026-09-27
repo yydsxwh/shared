@@ -57,7 +57,7 @@ export type PlatformClientOptions = {
 };
 
 export type RequestOptions = {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   /** JSON 请求体；与 body 二选一 */
   json?: unknown;
   /** 原始请求体，用于 multipart 代传 */
