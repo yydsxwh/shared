@@ -6,7 +6,8 @@
  * Server Component、脚本）构造本客户端。
  */
 
-import { PlatformHttpClient, type PlatformClientOptions } from "./http";
+import { PlatformHttpClient } from "./http";
+import type { PlatformClientOptions } from "./http";
 import { AiClient } from "./ai";
 import { CatalogClient } from "./catalog";
 import { PaymentClient } from "./payments";

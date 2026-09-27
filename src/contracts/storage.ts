@@ -76,6 +76,13 @@ export type CreateUploadRequest = {
   labels?: Record<string, string>;
   /** 大文件分片直传；平台据此下发分片签名而不是单条 PUT */
   multipart?: boolean;
+  /**
+   * 对象 key 前缀。必须落在调用方自己的 namespace 下。
+   * Academic 私有资料必须是 `academic/private/...`，不能写到别的产品。
+   */
+  objectPrefix?: string;
+  /** 预期分片数。平台据此拒绝明显超出范围的分片签名。 */
+  expectedPartCount?: number;
 };
 
 /** 浏览器照此发起上传；platform 不下发任何长期密钥 */
@@ -171,3 +178,92 @@ export type ListFilesResponse = {
   files: FileRecord[];
   nextCursor: string | null;
 };
+
+/** 产品私有资料的对象前缀。姓名、手机号不得出现在 key 里。 */
+export const PRODUCT_PRIVATE_PREFIX: Record<string, string> = {
+  academic: "academic/private/",
+};
+
+export type StorageProbeState = "ok" | "error" | "skipped";
+
+/** 存储健康。不含任何长期密钥。 */
+export type StorageHealth = {
+  providerConfigured: boolean;
+  provider: StorageProvider;
+  connection: StorageProbeState;
+  uploadTest: StorageProbeState;
+  readTest: StorageProbeState;
+  latencyMs: number | null;
+  /** null 表示当前 provider 不提供桶级隐私探测 */
+  bucketPrivate: boolean | null;
+};
+
+export type StorageSettingsView = {
+  provider: StorageProvider;
+  region: string;
+  bucket: string;
+  endpoint: string;
+  prefix: string;
+  status: "configured" | "incomplete";
+  secretWriteOnly: true;
+  accessKeyIdMasked: string;
+  hasAccessKeySecret: boolean;
+  source: "ENV" | "DATABASE" | "MIXED";
+};
+
+export type UpdateStorageSettingsRequest = {
+  provider?: StorageProvider;
+  region?: string;
+  bucket?: string;
+  endpoint?: string;
+  prefix?: string;
+  /** 留空表示不修改；禁止用这个字段清除密钥 */
+  accessKeyId?: string;
+  accessKeySecret?: string;
+};
+
+export const STORAGE_ERROR_CODES = [
+  "UNAUTHENTICATED",
+  "PERMISSION_DENIED",
+  "NAMESPACE_FORBIDDEN",
+  "PREFIX_FORBIDDEN",
+  "UNSUPPORTED_MEDIA",
+  "PAYLOAD_TOO_LARGE",
+  "UPLOAD_EXPIRED",
+  "OBJECT_MISSING",
+  "PROVIDER_UNAVAILABLE",
+] as const;
+
+export type StorageErrorCode = (typeof STORAGE_ERROR_CODES)[number];
+
+const PREFIX_SEGMENT = /^[a-z0-9][a-z0-9_-]*$/i;
+
+/**
+ * 上传会话只能写调用方自己的 namespace。
+ * 拒绝 `..`、绝对路径，以及跨产品前缀（例如 academic 写 course/private）。
+ */
+export function assertObjectPrefix(namespace: string, prefix: string | undefined): string | null {
+  if (!prefix) return null;
+  const normalized = prefix.replace(/\\/g, "/").replace(/\/+$/, "");
+  if (!normalized || normalized.startsWith("/") || normalized.includes("..")) {
+    throw new Error("对象前缀非法");
+  }
+  const segments = normalized.split("/");
+  if (segments.some((segment) => !PREFIX_SEGMENT.test(segment))) {
+    throw new Error("对象前缀含有非法字符");
+  }
+  if (segments[0] !== namespace) {
+    throw new Error("对象前缀必须落在调用方自己的 namespace");
+  }
+  const required = PRODUCT_PRIVATE_PREFIX[namespace];
+  if (required && !`${normalized}/`.startsWith(required)) {
+    throw new Error(`namespace ${namespace} 的对象必须放在 ${required}`);
+  }
+  return normalized;
+}
+
+export function safeObjectExtension(fileName: string): string {
+  const base = fileName.split(/[\\/]/).pop() ?? "";
+  const match = /\.([a-z0-9]{1,8})$/i.exec(base);
+  return match ? `.${match[1]!.toLowerCase()}` : "";
+}
