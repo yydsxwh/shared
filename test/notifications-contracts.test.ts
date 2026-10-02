@@ -4,6 +4,7 @@ import test from "node:test";
 import { catalogEntry } from "../src/contracts/config";
 import {
   applyWechatFieldMap,
+  inspectWechatFieldMap,
   assertAudienceAllowed,
   assertSafeNotificationLink,
   forumReplyEventId,
@@ -92,4 +93,31 @@ test("手机号、去重键和金额格式", () => {
   assert.notEqual(forumReplyEventId("c1", "usr_a"), forumReplyEventId("c1", "usr_b"));
   assert.equal(lowBalanceDedupeKey("cust", 2), "academic-low-balance:cust:2");
   assert.equal(yuanFromCents(640000), "6400.00");
+});
+
+test("站长字段映射拒绝重复、非法字段名和越权数据", () => {
+  const ok = inspectWechatFieldMap("ACADEMIC_LOW_BALANCE_RENEWAL_ALERT", [
+    { wechatField: "thing1", systemField: "learnerName" },
+    { wechatField: "amount2", systemField: "availableBalance" },
+    { wechatField: "", systemField: "" },
+  ]);
+  assert.equal(ok.ok, true);
+  if (ok.ok) assert.deepEqual(ok.map, { thing1: "learnerName", amount2: "availableBalance" });
+  assert.equal(inspectWechatFieldMap("ACADEMIC_LOW_BALANCE_RENEWAL_ALERT", [
+    { wechatField: "thing1", systemField: "learnerName" },
+    { wechatField: "thing1", systemField: "courseName" },
+  ]).ok, false);
+  const badName = inspectWechatFieldMap("ACADEMIC_PRIVATE_ADMIN_ALERT", [
+    { wechatField: "1bad", systemField: "summary" },
+  ]);
+  assert.equal(badName.ok, false);
+  if (!badName.ok) assert.equal(badName.message, "微信字段名不合法");
+  const leaked = inspectWechatFieldMap("ACADEMIC_SESSION_USAGE_CONFIRMED", [
+    { wechatField: "thing1", systemField: "availableBalance" },
+  ]);
+  assert.equal(leaked.ok, false);
+  const threshold = catalogEntry("notifications.academic.lowBalanceThresholdCents");
+  assert.equal(threshold?.valueType, "number");
+  assert.equal(threshold?.builtinDefault, "10000");
+  assert.equal(threshold?.sensitivity, "INTERNAL");
 });

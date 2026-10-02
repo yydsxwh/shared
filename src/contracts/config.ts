@@ -259,6 +259,7 @@ export const CONFIG_CATALOG: readonly ConfigCatalogEntry[] = [
   entry({ key: "notifications.wechat.miniProgram.page.lowBalance", group: "notifications", label: "续费小程序页面", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "留空则不编造深链" }),
   entry({ key: "notifications.wechat.miniProgram.page.fallback", group: "notifications", label: "小程序通知首页", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "没有对应页面时的回落路径；不要填不存在的帖子链接" }),
   entry({ key: "notifications.wechat.fieldMaps", group: "notifications", label: "微信模板字段映射", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "JSON。键是事件，值是微信字段到数据字段，例如 thing1=learnerName。不允许表达式" }),
+  entry({ key: "notifications.academic.lowBalanceThresholdCents", group: "notifications", label: "低余额阈值（分）", valueType: "number", sensitivity: "INTERNAL", sharePolicy: G, builtinDefault: "10000", description: "学员可用余额低于该金额时提醒站长。配置中心存分，站长界面按元填写。0 到 100000000 分" }),
   entry({ key: "notifications.routes", group: "notifications", label: "通知事件路由", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "JSON。空则使用内置默认。产品可覆盖" }),
   entry({ key: "notifications.recipients", group: "notifications", label: "站长通知接收人", valueType: "stringList", sensitivity: "INTERNAL", sharePolicy: G, description: "Account 用户 sub，不存手机号副本" }),
   entry({ key: "notifications.sms.businessEnabled", group: "notifications", label: "启用业务短信", valueType: "boolean", sensitivity: "INTERNAL", sharePolicy: G, builtinDefault: "false", description: "与登录验证码短信分开。关闭不影响登录" }),

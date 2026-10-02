@@ -63,6 +63,15 @@ export const NOTIFICATION_EVENT_TYPES = [
 ] as const;
 export type NotificationEventType = (typeof NOTIFICATION_EVENT_TYPES)[number];
 
+/** 站长要在后台逐个填写的 Academic 公众号模板。测试和系统告警复用已有模板，不另算一项。 */
+export const ACADEMIC_OFFICIAL_EVENTS = [
+  "ACADEMIC_SESSION_USAGE_SUBMITTED",
+  "ACADEMIC_SESSION_USAGE_CONFIRMED",
+  "ACADEMIC_SESSION_USAGE_AUTO_CONFIRMED",
+  "ACADEMIC_PRIVATE_ADMIN_ALERT",
+  "ACADEMIC_LOW_BALANCE_RENEWAL_ALERT",
+] as const satisfies readonly NotificationEventType[];
+
 /** 每个事件允许出现在微信 / 短信里的数据字段。未列出的字段一律不发。 */
 export const NOTIFICATION_EVENT_FIELDS: Record<NotificationEventType, readonly string[]> = {
   FORUM_REPLY_CREATED: ["postTitle", "commentExcerpt", "occurredAt"],
@@ -317,6 +326,32 @@ export function applyWechatFieldMap(
     out[wechatKey] = { value: value.slice(0, 20) };
   }
   return { ok: true, data: out };
+}
+
+export type WechatFieldMapRow = { wechatField: string; systemField: string };
+
+/**
+ * 站长按行填写「微信模板字段 → 系统字段」。
+ * 微信字段名不写死，但必须是合法标识符，且不能映射到该事件禁止外发的数据。
+ */
+export function inspectWechatFieldMap(
+  eventType: NotificationEventType,
+  rows: readonly WechatFieldMapRow[],
+): { ok: true; map: Record<string, string> } | { ok: false; message: string } {
+  const allowed = new Set(NOTIFICATION_EVENT_FIELDS[eventType]);
+  const map: Record<string, string> = {};
+  for (const row of rows) {
+    const wechatField = row.wechatField.trim();
+    const systemField = row.systemField.trim();
+    if (!wechatField && !systemField) continue;
+    if (!FIELD_KEY.test(wechatField)) return { ok: false, message: "微信字段名不合法" };
+    if (Object.prototype.hasOwnProperty.call(map, wechatField)) {
+      return { ok: false, message: "同一个微信字段不能映射两次" };
+    }
+    if (!allowed.has(systemField)) return { ok: false, message: "映射了当前事件不允许发送的字段" };
+    map[wechatField] = systemField;
+  }
+  return { ok: true, map };
 }
 
 export function parseFieldMaps(raw: string | null | undefined): Record<string, Record<string, string>> {
