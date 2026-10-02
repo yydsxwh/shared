@@ -92,6 +92,14 @@ export const PRODUCT_REGISTRY: readonly ProductRecord[] = [
     note: "论坛在主站 packages/forum。独立仓库只有占位 README。",
   },
   {
+    id: "knowledge",
+    role: "product",
+    origin: "https://knowledge.yydsxwh.com",
+    repository: "yydsxwh/knowledge",
+    runtimeDependsOnMain: false,
+    note: "会员制知识社区。独立 Next 进程和 PostgreSQL。生产域名由部署配置决定，注册表记录规划入口。模板已入库，生产尚未安装。",
+  },
+  {
     id: "docs",
     role: "product",
     origin: "https://www.yydsxwh.com",

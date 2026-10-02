@@ -19,7 +19,7 @@ test("账号中心与日事的运行不依赖主站进程", () => {
   assert.equal(productById("rishi")?.runtimeDependsOnMain, false);
   assert.deepEqual(
     productsIndependentOfMain().map((item) => item.id),
-    ["rishi"],
+    ["rishi", "knowledge"],
   );
 });
 
