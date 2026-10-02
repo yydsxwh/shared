@@ -22,6 +22,8 @@ export const PLATFORM_SERVICE_SCOPES = [
   "payments",
   /** 配置中心的管理操作。产品读取自己的有效配置不需要它。 */
   "config",
+  /** 外部通知发送。浏览器不能拿这个 scope。 */
+  "notifications",
 ] as const;
 
 export type PlatformServiceScope = (typeof PLATFORM_SERVICE_SCOPES)[number];
@@ -34,7 +36,7 @@ export function isPlatformServiceScope(value: string): value is PlatformServiceS
 
 /**
  * 解析 `ai+storage+catalog` 或 `*` / `all`。
- * 未写 scope 时表示当前五个已实现模块全部放开（向后兼容）。
+ * 未写 scope 时表示当前已实现模块全部放开（向后兼容）。
  */
 export function parseServiceScopes(raw: string | undefined): PlatformServiceScope[] {
   const text = raw?.trim();
