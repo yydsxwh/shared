@@ -95,6 +95,26 @@ test("手机号、去重键和金额格式", () => {
   assert.equal(yuanFromCents(640000), "6400.00");
 });
 
+test("站长私信只允许摘要字段，不能把整段聊天塞进微信", () => {
+  const entry = catalogEntry("notifications.wechat.officialAccount.template.siteOwnerDirectMessage");
+  assert.equal(entry?.sensitivity, "INTERNAL");
+  const picked = pickTemplateData("SITE_OWNER_DIRECT_MESSAGE", {
+    senderName: "站长",
+    messageExcerpt: "这是一条测试",
+    occurredAt: "10-02 12:00",
+    body: "完整正文不该出现",
+  });
+  assert.equal(picked.ok, true);
+  if (picked.ok) {
+    assert.equal(picked.data.body, undefined);
+    assert.equal(picked.data.messageExcerpt, "这是一条测试");
+  }
+  assert.equal(assertAudienceAllowed("SITE_OWNER_DIRECT_MESSAGE", "STUDENT"), null);
+  assert.equal(routeFor("SITE_OWNER_DIRECT_MESSAGE", "").wechat, true);
+  assert.equal(routeFor("SITE_OWNER_DIRECT_MESSAGE", "").sms, false);
+  assert.equal(routeFor("SITE_OWNER_DIRECT_MESSAGE", "").inApp, true);
+});
+
 test("站长字段映射拒绝重复、非法字段名和越权数据", () => {
   const ok = inspectWechatFieldMap("ACADEMIC_LOW_BALANCE_RENEWAL_ALERT", [
     { wechatField: "thing1", systemField: "learnerName" },
