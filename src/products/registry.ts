@@ -92,6 +92,14 @@ export const PRODUCT_REGISTRY: readonly ProductRecord[] = [
     note: "论坛在主站 packages/forum。独立仓库只有占位 README。",
   },
   {
+    id: "kkchat",
+    role: "product",
+    origin: "https://kkchat.yydsxwh.com",
+    repository: "yydsxwh/kkchat",
+    runtimeDependsOnMain: false,
+    note: "独立进程、独立 PostgreSQL。生产域名规划为 kkchat.yydsxwh.com，端口 3210。DNS 未挂上之前，门户仍使用这个 origin，不把聊天写回主站。",
+  },
+  {
     id: "docs",
     role: "product",
     origin: "https://www.yydsxwh.com",

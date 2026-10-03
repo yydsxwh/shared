@@ -24,6 +24,7 @@ export const CONFIG_PRODUCT_IDS = [
   "personalwebsite",
   "mathcode",
   "valorant",
+  "kkchat",
 ] as const;
 export type ProductId = (typeof CONFIG_PRODUCT_IDS)[number];
 
@@ -48,6 +49,7 @@ const CLIENT_TO_PRODUCT: Record<string, ProductId> = {
   personalwebsite: "personalwebsite",
   mathcode: "mathcode",
   valorant: "valorant",
+  kkchat: "kkchat",
 };
 
 export function productIdForClient(clientId: string): ProductId | null {
@@ -254,11 +256,16 @@ export const CONFIG_CATALOG: readonly ConfigCatalogEntry[] = [
   entry({ key: "notifications.wechat.officialAccount.template.sessionUsageAutoConfirmed", group: "notifications", label: "公众号自动确认模板 ID", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "留空则不走公众号" }),
   entry({ key: "notifications.wechat.officialAccount.template.lowBalanceRenewal", group: "notifications", label: "公众号续费提醒模板 ID", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "留空则不走公众号" }),
   entry({ key: "notifications.wechat.officialAccount.template.privateAdminAlert", group: "notifications", label: "公众号站长异常模板 ID", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "留空则不走公众号" }),
+entry({ key: "notifications.wechat.officialAccount.template.kkchatMessage", group: "notifications", label: "公众号 KKChat 消息模板 ID", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "只发短摘要。留空则官方消息不走公众号" }),
+  entry({ key: "notifications.wechat.miniProgram.template.kkchatMessage", group: "notifications", label: "小程序 KKChat 消息模板 ID", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "只发短摘要。留空则不走小程序" }),
+  entry({ key: "notifications.wechat.officialAccount.template.siteOwnerDirectMessage", group: "notifications", label: "公众号站长私信模板 ID", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "站长给用户发私信时使用。留空则该事件不走公众号" }),
+  entry({ key: "notifications.wechat.miniProgram.template.siteOwnerDirectMessage", group: "notifications", label: "小程序站长私信模板 ID", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "留空则不走小程序" }),
   entry({ key: "notifications.wechat.miniProgram.page.forumReply", group: "notifications", label: "论坛评论小程序页面", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "留空则不编造深链，改走通知首页配置" }),
   entry({ key: "notifications.wechat.miniProgram.page.sessionUsage", group: "notifications", label: "课时小程序页面", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "留空则不编造深链" }),
   entry({ key: "notifications.wechat.miniProgram.page.lowBalance", group: "notifications", label: "续费小程序页面", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "留空则不编造深链" }),
   entry({ key: "notifications.wechat.miniProgram.page.fallback", group: "notifications", label: "小程序通知首页", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "没有对应页面时的回落路径；不要填不存在的帖子链接" }),
   entry({ key: "notifications.wechat.fieldMaps", group: "notifications", label: "微信模板字段映射", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "JSON。键是事件，值是微信字段到数据字段，例如 thing1=learnerName。不允许表达式" }),
+  entry({ key: "notifications.academic.lowBalanceThresholdCents", group: "notifications", label: "低余额阈值（分）", valueType: "number", sensitivity: "INTERNAL", sharePolicy: G, builtinDefault: "10000", description: "学员可用余额低于该金额时提醒站长。配置中心存分，站长界面按元填写。0 到 100000000 分" }),
   entry({ key: "notifications.routes", group: "notifications", label: "通知事件路由", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "JSON。空则使用内置默认。产品可覆盖" }),
   entry({ key: "notifications.recipients", group: "notifications", label: "站长通知接收人", valueType: "stringList", sensitivity: "INTERNAL", sharePolicy: G, description: "Account 用户 sub，不存手机号副本" }),
   entry({ key: "notifications.sms.businessEnabled", group: "notifications", label: "启用业务短信", valueType: "boolean", sensitivity: "INTERNAL", sharePolicy: G, builtinDefault: "false", description: "与登录验证码短信分开。关闭不影响登录" }),
@@ -340,6 +347,7 @@ export const PRODUCT_GROUP_USAGE: Record<ProductId, readonly ConfigGroup[]> = {
   personalwebsite: ["storage", "links"],
   mathcode: ["ai", "payment", "links"],
   valorant: ["storage", "links"],
+  kkchat: ["links", "notifications"],
 };
 
 export function productsUsingGroup(group: ConfigGroup): ProductId[] {

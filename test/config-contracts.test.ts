@@ -68,6 +68,8 @@ test("产品注册与影响范围", () => {
   assert.ok(productsUsingGroup("storage").includes("academic"));
   assert.ok(!productsUsingGroup("storage").includes("mathcode"));
   assert.ok(CONFIG_PRODUCT_IDS.includes("rishi"));
+  assert.ok(CONFIG_PRODUCT_IDS.includes("kkchat"));
+  assert.equal(productIdForClient("kkchat"), "kkchat");
   assert.ok(parseServiceScopes("ai+storage+config").includes("config"));
 });
 

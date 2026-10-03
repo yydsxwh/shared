@@ -60,8 +60,19 @@ export const NOTIFICATION_EVENT_TYPES = [
   "ACADEMIC_LOW_BALANCE_RENEWAL_ALERT",
   "SYSTEM_CRITICAL_ALERT",
   "NOTIFICATION_TEST",
+"KKCHAT_MESSAGE_RECEIVED",
+  "SITE_OWNER_DIRECT_MESSAGE",
 ] as const;
 export type NotificationEventType = (typeof NOTIFICATION_EVENT_TYPES)[number];
+
+/** 站长要在后台逐个填写的 Academic 公众号模板。测试和系统告警复用已有模板，不另算一项。 */
+export const ACADEMIC_OFFICIAL_EVENTS = [
+  "ACADEMIC_SESSION_USAGE_SUBMITTED",
+  "ACADEMIC_SESSION_USAGE_CONFIRMED",
+  "ACADEMIC_SESSION_USAGE_AUTO_CONFIRMED",
+  "ACADEMIC_PRIVATE_ADMIN_ALERT",
+  "ACADEMIC_LOW_BALANCE_RENEWAL_ALERT",
+] as const satisfies readonly NotificationEventType[];
 
 /** 每个事件允许出现在微信 / 短信里的数据字段。未列出的字段一律不发。 */
 export const NOTIFICATION_EVENT_FIELDS: Record<NotificationEventType, readonly string[]> = {
@@ -73,6 +84,8 @@ export const NOTIFICATION_EVENT_FIELDS: Record<NotificationEventType, readonly s
   ACADEMIC_LOW_BALANCE_RENEWAL_ALERT: ["learnerName", "availableBalance", "courseName"],
   SYSTEM_CRITICAL_ALERT: ["summary", "occurredAt"],
   NOTIFICATION_TEST: ["note"],
+KKCHAT_MESSAGE_RECEIVED: ["senderName", "excerpt", "occurredAt"],
+  SITE_OWNER_DIRECT_MESSAGE: ["senderName", "messageExcerpt", "occurredAt"],
 };
 
 /**
@@ -125,6 +138,9 @@ export const DEFAULT_NOTIFICATION_ROUTES: Record<NotificationEventType, Notifica
   FORUM_REPLY_CREATED: { inApp: true, wechat: true, sms: false },
   SYSTEM_CRITICAL_ALERT: { inApp: true, wechat: false, sms: false },
   NOTIFICATION_TEST: { inApp: false, wechat: true, sms: true },
+// 普通互聊不发微信。这个事件只给站长/官方消息，短信仍关闭。
+  KKCHAT_MESSAGE_RECEIVED: { inApp: true, wechat: true, sms: false },
+  SITE_OWNER_DIRECT_MESSAGE: { inApp: true, wechat: true, sms: false },
 };
 
 /** 私密异议只允许站长。老师连投递记录都不应该有。 */
@@ -137,6 +153,8 @@ export const EVENT_AUDIENCES: Record<NotificationEventType, readonly Notificatio
   FORUM_REPLY_CREATED: ["WATCHER"],
   SYSTEM_CRITICAL_ALERT: ["ADMIN"],
   NOTIFICATION_TEST: ["ADMIN"],
+KKCHAT_MESSAGE_RECEIVED: ["STUDENT", "TEACHER", "ADMIN", "WATCHER"],
+  SITE_OWNER_DIRECT_MESSAGE: ["STUDENT", "TEACHER", "ADMIN", "WATCHER"],
 };
 
 export const WECHAT_TEMPLATE_CONFIG_KEYS: Record<"officialAccount" | "miniProgram", Record<NotificationEventType, string>> = {
@@ -149,6 +167,8 @@ export const WECHAT_TEMPLATE_CONFIG_KEYS: Record<"officialAccount" | "miniProgra
     ACADEMIC_LOW_BALANCE_RENEWAL_ALERT: "notifications.wechat.officialAccount.template.lowBalanceRenewal",
     SYSTEM_CRITICAL_ALERT: "notifications.wechat.officialAccount.template.privateAdminAlert",
     NOTIFICATION_TEST: "notifications.wechat.officialAccount.template.forumReply",
+KKCHAT_MESSAGE_RECEIVED: "notifications.wechat.officialAccount.template.kkchatMessage",
+    SITE_OWNER_DIRECT_MESSAGE: "notifications.wechat.officialAccount.template.siteOwnerDirectMessage",
   },
   miniProgram: {
     FORUM_REPLY_CREATED: "notifications.wechat.miniProgram.template.forumReply",
@@ -159,6 +179,8 @@ export const WECHAT_TEMPLATE_CONFIG_KEYS: Record<"officialAccount" | "miniProgra
     ACADEMIC_LOW_BALANCE_RENEWAL_ALERT: "notifications.wechat.miniProgram.template.lowBalanceRenewal",
     SYSTEM_CRITICAL_ALERT: "notifications.wechat.miniProgram.template.privateAdminAlert",
     NOTIFICATION_TEST: "notifications.wechat.miniProgram.template.forumReply",
+KKCHAT_MESSAGE_RECEIVED: "notifications.wechat.miniProgram.template.kkchatMessage",
+    SITE_OWNER_DIRECT_MESSAGE: "notifications.wechat.miniProgram.template.siteOwnerDirectMessage",
   },
 };
 
@@ -317,6 +339,32 @@ export function applyWechatFieldMap(
     out[wechatKey] = { value: value.slice(0, 20) };
   }
   return { ok: true, data: out };
+}
+
+export type WechatFieldMapRow = { wechatField: string; systemField: string };
+
+/**
+ * 站长按行填写「微信模板字段 → 系统字段」。
+ * 微信字段名不写死，但必须是合法标识符，且不能映射到该事件禁止外发的数据。
+ */
+export function inspectWechatFieldMap(
+  eventType: NotificationEventType,
+  rows: readonly WechatFieldMapRow[],
+): { ok: true; map: Record<string, string> } | { ok: false; message: string } {
+  const allowed = new Set(NOTIFICATION_EVENT_FIELDS[eventType]);
+  const map: Record<string, string> = {};
+  for (const row of rows) {
+    const wechatField = row.wechatField.trim();
+    const systemField = row.systemField.trim();
+    if (!wechatField && !systemField) continue;
+    if (!FIELD_KEY.test(wechatField)) return { ok: false, message: "微信字段名不合法" };
+    if (Object.prototype.hasOwnProperty.call(map, wechatField)) {
+      return { ok: false, message: "同一个微信字段不能映射两次" };
+    }
+    if (!allowed.has(systemField)) return { ok: false, message: "映射了当前事件不允许发送的字段" };
+    map[wechatField] = systemField;
+  }
+  return { ok: true, map };
 }
 
 export function parseFieldMaps(raw: string | null | undefined): Record<string, Record<string, string>> {
