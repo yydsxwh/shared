@@ -24,6 +24,7 @@ export const CONFIG_PRODUCT_IDS = [
   "personalwebsite",
   "mathcode",
   "valorant",
+  "kkchat",
 ] as const;
 export type ProductId = (typeof CONFIG_PRODUCT_IDS)[number];
 
@@ -48,6 +49,7 @@ const CLIENT_TO_PRODUCT: Record<string, ProductId> = {
   personalwebsite: "personalwebsite",
   mathcode: "mathcode",
   valorant: "valorant",
+  kkchat: "kkchat",
 };
 
 export function productIdForClient(clientId: string): ProductId | null {
@@ -254,6 +256,8 @@ export const CONFIG_CATALOG: readonly ConfigCatalogEntry[] = [
   entry({ key: "notifications.wechat.officialAccount.template.sessionUsageAutoConfirmed", group: "notifications", label: "公众号自动确认模板 ID", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "留空则不走公众号" }),
   entry({ key: "notifications.wechat.officialAccount.template.lowBalanceRenewal", group: "notifications", label: "公众号续费提醒模板 ID", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "留空则不走公众号" }),
   entry({ key: "notifications.wechat.officialAccount.template.privateAdminAlert", group: "notifications", label: "公众号站长异常模板 ID", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "留空则不走公众号" }),
+  entry({ key: "notifications.wechat.officialAccount.template.kkchatMessage", group: "notifications", label: "公众号 KKChat 消息模板 ID", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "只发短摘要。留空则官方消息不走公众号" }),
+  entry({ key: "notifications.wechat.miniProgram.template.kkchatMessage", group: "notifications", label: "小程序 KKChat 消息模板 ID", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "只发短摘要。留空则不走小程序" }),
   entry({ key: "notifications.wechat.miniProgram.page.forumReply", group: "notifications", label: "论坛评论小程序页面", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "留空则不编造深链，改走通知首页配置" }),
   entry({ key: "notifications.wechat.miniProgram.page.sessionUsage", group: "notifications", label: "课时小程序页面", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "留空则不编造深链" }),
   entry({ key: "notifications.wechat.miniProgram.page.lowBalance", group: "notifications", label: "续费小程序页面", valueType: "string", sensitivity: "INTERNAL", sharePolicy: G, description: "留空则不编造深链" }),
@@ -341,6 +345,7 @@ export const PRODUCT_GROUP_USAGE: Record<ProductId, readonly ConfigGroup[]> = {
   personalwebsite: ["storage", "links"],
   mathcode: ["ai", "payment", "links"],
   valorant: ["storage", "links"],
+  kkchat: ["links", "notifications"],
 };
 
 export function productsUsingGroup(group: ConfigGroup): ProductId[] {
