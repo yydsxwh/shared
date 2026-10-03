@@ -6,6 +6,31 @@
  */
 
 import type { ProductId } from "./config";
+import {
+  NOTIFICATION_EVENT_CATALOG,
+  NOTIFICATION_EVENT_TYPES,
+  type NotificationEventType,
+  type NotificationPreferenceCategory,
+} from "./notification-catalog";
+
+export {
+  NOTIFICATION_EVENT_CATALOG,
+  NOTIFICATION_EVENT_TYPES,
+  NOTIFICATION_PREFERENCE_CATEGORIES,
+  OWNER_VISIBLE_EVENTS,
+  PREFERENCE_CATEGORY_LABEL,
+  DELIVERY_STATUS_EXPLANATION,
+  WECHAT_MANUAL_SETUP_STEPS,
+  explainDeliveryStatus,
+  notificationEventMeta,
+  preferenceCategoryFor,
+  suggestWechatFieldRows,
+} from "./notification-catalog";
+export type {
+  NotificationEventMeta,
+  NotificationEventType,
+  NotificationPreferenceCategory,
+} from "./notification-catalog";
 
 export const NOTIFICATION_PRIORITIES = ["NORMAL", "HIGH", "CRITICAL"] as const;
 export type NotificationPriority = (typeof NOTIFICATION_PRIORITIES)[number];
@@ -51,20 +76,6 @@ export type NotificationProviderStatus = (typeof NOTIFICATION_PROVIDER_STATUSES)
 export const NOTIFICATION_AUDIENCES = ["STUDENT", "TEACHER", "ADMIN", "WATCHER"] as const;
 export type NotificationAudience = (typeof NOTIFICATION_AUDIENCES)[number];
 
-export const NOTIFICATION_EVENT_TYPES = [
-  "FORUM_REPLY_CREATED",
-  "ACADEMIC_SESSION_USAGE_SUBMITTED",
-  "ACADEMIC_SESSION_USAGE_CONFIRMED",
-  "ACADEMIC_SESSION_USAGE_AUTO_CONFIRMED",
-  "ACADEMIC_PRIVATE_ADMIN_ALERT",
-  "ACADEMIC_LOW_BALANCE_RENEWAL_ALERT",
-  "SYSTEM_CRITICAL_ALERT",
-  "NOTIFICATION_TEST",
-"KKCHAT_MESSAGE_RECEIVED",
-  "SITE_OWNER_DIRECT_MESSAGE",
-] as const;
-export type NotificationEventType = (typeof NOTIFICATION_EVENT_TYPES)[number];
-
 /** 站长要在后台逐个填写的 Academic 公众号模板。测试和系统告警复用已有模板，不另算一项。 */
 export const ACADEMIC_OFFICIAL_EVENTS = [
   "ACADEMIC_SESSION_USAGE_SUBMITTED",
@@ -75,18 +86,9 @@ export const ACADEMIC_OFFICIAL_EVENTS = [
 ] as const satisfies readonly NotificationEventType[];
 
 /** 每个事件允许出现在微信 / 短信里的数据字段。未列出的字段一律不发。 */
-export const NOTIFICATION_EVENT_FIELDS: Record<NotificationEventType, readonly string[]> = {
-  FORUM_REPLY_CREATED: ["postTitle", "commentExcerpt", "occurredAt"],
-  ACADEMIC_SESSION_USAGE_SUBMITTED: ["courseName", "learnerName", "occurredAt"],
-  ACADEMIC_SESSION_USAGE_CONFIRMED: ["courseName", "learnerName", "occurredAt"],
-  ACADEMIC_SESSION_USAGE_AUTO_CONFIRMED: ["courseName", "learnerName", "occurredAt"],
-  ACADEMIC_PRIVATE_ADMIN_ALERT: ["courseName", "occurredAt", "summary"],
-  ACADEMIC_LOW_BALANCE_RENEWAL_ALERT: ["learnerName", "availableBalance", "courseName"],
-  SYSTEM_CRITICAL_ALERT: ["summary", "occurredAt"],
-  NOTIFICATION_TEST: ["note"],
-KKCHAT_MESSAGE_RECEIVED: ["senderName", "excerpt", "occurredAt"],
-  SITE_OWNER_DIRECT_MESSAGE: ["senderName", "messageExcerpt", "occurredAt"],
-};
+export const NOTIFICATION_EVENT_FIELDS: Record<NotificationEventType, readonly string[]> = mapCatalog(
+  (row) => row.fields,
+);
 
 /**
  * 老师侧不能看到学生价格；学生侧不能看到老师课酬。
@@ -129,59 +131,18 @@ export type NotificationRoute = {
   sms: boolean;
 };
 
-export const DEFAULT_NOTIFICATION_ROUTES: Record<NotificationEventType, NotificationRoute> = {
-  ACADEMIC_SESSION_USAGE_SUBMITTED: { inApp: true, wechat: true, sms: false },
-  ACADEMIC_SESSION_USAGE_CONFIRMED: { inApp: true, wechat: true, sms: false },
-  ACADEMIC_SESSION_USAGE_AUTO_CONFIRMED: { inApp: true, wechat: true, sms: false },
-  ACADEMIC_PRIVATE_ADMIN_ALERT: { inApp: true, wechat: true, sms: false },
-  ACADEMIC_LOW_BALANCE_RENEWAL_ALERT: { inApp: true, wechat: true, sms: true },
-  FORUM_REPLY_CREATED: { inApp: true, wechat: true, sms: false },
-  SYSTEM_CRITICAL_ALERT: { inApp: true, wechat: false, sms: false },
-  NOTIFICATION_TEST: { inApp: false, wechat: true, sms: true },
-// 普通互聊不发微信。这个事件只给站长/官方消息，短信仍关闭。
-  KKCHAT_MESSAGE_RECEIVED: { inApp: true, wechat: true, sms: false },
-  SITE_OWNER_DIRECT_MESSAGE: { inApp: true, wechat: true, sms: false },
-};
+export const DEFAULT_NOTIFICATION_ROUTES: Record<NotificationEventType, NotificationRoute> = mapCatalog(
+  (row) => row.channels,
+);
 
 /** 私密异议只允许站长。老师连投递记录都不应该有。 */
-export const EVENT_AUDIENCES: Record<NotificationEventType, readonly NotificationAudience[]> = {
-  ACADEMIC_SESSION_USAGE_SUBMITTED: ["STUDENT", "ADMIN"],
-  ACADEMIC_SESSION_USAGE_CONFIRMED: ["TEACHER", "ADMIN"],
-  ACADEMIC_SESSION_USAGE_AUTO_CONFIRMED: ["TEACHER", "ADMIN"],
-  ACADEMIC_PRIVATE_ADMIN_ALERT: ["ADMIN"],
-  ACADEMIC_LOW_BALANCE_RENEWAL_ALERT: ["ADMIN"],
-  FORUM_REPLY_CREATED: ["WATCHER"],
-  SYSTEM_CRITICAL_ALERT: ["ADMIN"],
-  NOTIFICATION_TEST: ["ADMIN"],
-KKCHAT_MESSAGE_RECEIVED: ["STUDENT", "TEACHER", "ADMIN", "WATCHER"],
-  SITE_OWNER_DIRECT_MESSAGE: ["STUDENT", "TEACHER", "ADMIN", "WATCHER"],
-};
+export const EVENT_AUDIENCES: Record<NotificationEventType, readonly NotificationAudience[]> = mapCatalog(
+  (row) => row.audiences,
+);
 
 export const WECHAT_TEMPLATE_CONFIG_KEYS: Record<"officialAccount" | "miniProgram", Record<NotificationEventType, string>> = {
-  officialAccount: {
-    FORUM_REPLY_CREATED: "notifications.wechat.officialAccount.template.forumReply",
-    ACADEMIC_SESSION_USAGE_SUBMITTED: "notifications.wechat.officialAccount.template.sessionUsageSubmitted",
-    ACADEMIC_SESSION_USAGE_CONFIRMED: "notifications.wechat.officialAccount.template.sessionUsageConfirmed",
-    ACADEMIC_SESSION_USAGE_AUTO_CONFIRMED: "notifications.wechat.officialAccount.template.sessionUsageAutoConfirmed",
-    ACADEMIC_PRIVATE_ADMIN_ALERT: "notifications.wechat.officialAccount.template.privateAdminAlert",
-    ACADEMIC_LOW_BALANCE_RENEWAL_ALERT: "notifications.wechat.officialAccount.template.lowBalanceRenewal",
-    SYSTEM_CRITICAL_ALERT: "notifications.wechat.officialAccount.template.privateAdminAlert",
-    NOTIFICATION_TEST: "notifications.wechat.officialAccount.template.forumReply",
-KKCHAT_MESSAGE_RECEIVED: "notifications.wechat.officialAccount.template.kkchatMessage",
-    SITE_OWNER_DIRECT_MESSAGE: "notifications.wechat.officialAccount.template.siteOwnerDirectMessage",
-  },
-  miniProgram: {
-    FORUM_REPLY_CREATED: "notifications.wechat.miniProgram.template.forumReply",
-    ACADEMIC_SESSION_USAGE_SUBMITTED: "notifications.wechat.miniProgram.template.sessionUsageSubmitted",
-    ACADEMIC_SESSION_USAGE_CONFIRMED: "notifications.wechat.miniProgram.template.sessionUsageConfirmed",
-    ACADEMIC_SESSION_USAGE_AUTO_CONFIRMED: "notifications.wechat.miniProgram.template.sessionUsageAutoConfirmed",
-    ACADEMIC_PRIVATE_ADMIN_ALERT: "notifications.wechat.miniProgram.template.privateAdminAlert",
-    ACADEMIC_LOW_BALANCE_RENEWAL_ALERT: "notifications.wechat.miniProgram.template.lowBalanceRenewal",
-    SYSTEM_CRITICAL_ALERT: "notifications.wechat.miniProgram.template.privateAdminAlert",
-    NOTIFICATION_TEST: "notifications.wechat.miniProgram.template.forumReply",
-KKCHAT_MESSAGE_RECEIVED: "notifications.wechat.miniProgram.template.kkchatMessage",
-    SITE_OWNER_DIRECT_MESSAGE: "notifications.wechat.miniProgram.template.siteOwnerDirectMessage",
-  },
+  officialAccount: mapCatalog((row) => row.officialTemplateKey),
+  miniProgram: mapCatalog((row) => row.miniProgramTemplateKey),
 };
 
 export type NotificationSendRequest = {
@@ -219,8 +180,29 @@ export type NotificationEndpoint = {
   phoneRegion: "CN" | "INTL" | null;
   wechat: Array<{ channel: string; appId: string; openId: string; unionId?: string }>;
   grants: Array<{ templateId: string; status: string }>;
-  preferences: { inApp: boolean; wechat: boolean; sms: boolean };
+  preferences: {
+    inApp: boolean;
+    wechat: boolean;
+    sms: boolean;
+    /** 缺省表示沿用总开关。显式 false 才关掉这一类。 */
+    categories?: Partial<Record<NotificationPreferenceCategory, boolean>>;
+  };
 };
+
+/**
+ * 总开关关掉则全部不发。分类关掉只影响这一类。
+ * respectPreferences=false 留给站长级安全/业务告警，用户偏好不能把它关掉。
+ */
+export function wechatPreferenceAllows(
+  preferences: NotificationEndpoint["preferences"],
+  eventType: NotificationEventType,
+  respectPreferences: boolean | undefined,
+): boolean {
+  if (respectPreferences === false) return true;
+  if (!preferences.wechat) return false;
+  const category = NOTIFICATION_EVENT_CATALOG[eventType].preferenceCategory;
+  return preferences.categories?.[category] !== false;
+}
 
 const SECRET_PATTERNS = [
   /access[_-]?token/i,
@@ -432,6 +414,12 @@ export function lowBalanceDedupeKey(customerId: string, cycle: number | string):
 
 export function permanentDelivery(status: NotificationDeliveryStatus): boolean {
   return status === "SENT" || status === "FAILED" || status === "SKIPPED" || status === "NEEDS_BINDING" || status === "NEEDS_SUBSCRIPTION" || status === "DISABLED";
+}
+
+function mapCatalog<T>(pick: (row: (typeof NOTIFICATION_EVENT_CATALOG)[NotificationEventType]) => T) {
+  const out = {} as Record<NotificationEventType, T>;
+  for (const eventType of NOTIFICATION_EVENT_TYPES) out[eventType] = pick(NOTIFICATION_EVENT_CATALOG[eventType]);
+  return out;
 }
 
 export function yuanFromCents(cents: number): string {

@@ -34,7 +34,10 @@ export type KkchatSendInput = {
   idempotencyKey: string;
   senderProfile?: KkchatProfile;
   recipientProfile?: KkchatProfile;
-  /** 仅站长或官方消息。普通用户互聊保持关闭。 */
+  /**
+   * 兼容旧调用。KKChat 自己按未读周期决定要不要发微信，
+   * 产品不要靠这个开关绕过未读合并。
+   */
   notifyWechat?: boolean;
   senderName?: string;
 };
@@ -47,6 +50,25 @@ export type KkchatConversationRef = {
 
 export type KkchatSendResult = KkchatConversationRef & {
   duplicate: boolean;
+  wechatPlanned?: number;
+};
+
+export type KkchatGroupInput = {
+  creatorSub: string;
+  title: string;
+  memberSubs: string[];
+  businessType: string;
+  businessRefId: string;
+  profiles?: Array<KkchatProfile & { accountSub: string }>;
+};
+
+export type KkchatAnnouncementInput = {
+  senderSub: string;
+  conversationId: string;
+  body: string;
+  courseName: string;
+  idempotencyKey: string;
+  senderName?: string;
 };
 
 export function conversationHref(conversationId: string) {
@@ -78,6 +100,14 @@ export class KkchatClient {
 
   sendMessage(input: KkchatSendInput): Promise<KkchatSendResult> {
     return this.request("/api/service/messages", { method: "POST", json: input });
+  }
+
+  ensureGroup(input: KkchatGroupInput): Promise<KkchatConversationRef> {
+    return this.request("/api/service/groups", { method: "POST", json: input });
+  }
+
+  sendAnnouncement(input: KkchatAnnouncementInput): Promise<KkchatSendResult> {
+    return this.request("/api/service/announcements", { method: "POST", json: input });
   }
 
   unread(accountSub: string): Promise<{ accountSub: string; count: number }> {
