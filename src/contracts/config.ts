@@ -25,6 +25,7 @@ export const CONFIG_PRODUCT_IDS = [
   "mathcode",
   "valorant",
   "kkchat",
+  "xiangqi",
 ] as const;
 export type ProductId = (typeof CONFIG_PRODUCT_IDS)[number];
 
@@ -50,6 +51,7 @@ const CLIENT_TO_PRODUCT: Record<string, ProductId> = {
   mathcode: "mathcode",
   valorant: "valorant",
   kkchat: "kkchat",
+  xiangqi: "xiangqi",
 };
 
 export function productIdForClient(clientId: string): ProductId | null {
@@ -205,6 +207,9 @@ export const CONFIG_CATALOG: readonly ConfigCatalogEntry[] = [
   entry({ key: "ai.route.vision-ocr", group: "ai", label: "视觉识别路由", valueType: "stringList", sensitivity: "INTERNAL", sharePolicy: G, description: "必须是带视觉能力的模型" }),
   entry({ key: "ai.route.general", group: "ai", label: "通用路由", valueType: "stringList", sensitivity: "INTERNAL", sharePolicy: G, description: "摘要、改写等" }),
 
+  // Each provider is one atomic encrypted connection; credentials never leave Platform.
+  ...(["openai", "anthropic", "qwen", "custom"] as const).map((provider) => entry({ key: `ai.providers.${provider}`, group: "ai", label: `${provider} 连接配置`, valueType: "string", sensitivity: "SECRET", sharePolicy: G, runtimeDeliverable: false, testCapability: true, description: "加密的 Provider 连接配置；管理界面只返回掩码" })),
+
   // maps ---------------------------------------------------------------------
   entry({ key: "maps.provider", group: "maps", label: "地图服务", valueType: "enum", options: ["DISABLED", "AMAP"], sensitivity: "INTERNAL", sharePolicy: G, builtinDefault: "DISABLED", testCapability: true, description: "当前只支持高德" }),
   entry({ key: "maps.amap.webJsKey", group: "maps", label: "高德 Web JS Key", valueType: "string", sensitivity: "PUBLIC", sharePolicy: G, clientVisibility: "BROWSER_ALLOWED", description: "浏览器地图 Key，必须在高德后台做域名限制" }),
@@ -350,6 +355,7 @@ export const PRODUCT_GROUP_USAGE: Record<ProductId, readonly ConfigGroup[]> = {
   mathcode: ["ai", "payment", "links"],
   valorant: ["storage", "links"],
   kkchat: ["links", "notifications"],
+  xiangqi: ["ai", "links"],
 };
 
 export function productsUsingGroup(group: ConfigGroup): ProductId[] {
