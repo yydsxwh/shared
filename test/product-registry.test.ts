@@ -19,10 +19,12 @@ test("账号中心与日事的运行不依赖主站进程", () => {
   assert.equal(productById("rishi")?.runtimeDependsOnMain, false);
   assert.deepEqual(
     productsIndependentOfMain().map((item) => item.id),
-    ["rishi", "kkchat"],
+    ["rishi", "kkchat", "knowledge"],
   );
   assert.equal(productById("kkchat")?.origin, "https://kkchat.yydsxwh.com");
   assert.equal(productById("kkchat")?.runtimeDependsOnMain, false);
+  assert.equal(productById("knowledge")?.origin, "https://knowledge.yydsxwh.com");
+  assert.equal(productById("knowledge")?.runtimeDependsOnMain, false);
 });
 
 test("尚未拆出的产品必须标明仍在主站进程里", () => {
