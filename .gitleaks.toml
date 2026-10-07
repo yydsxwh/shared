@@ -1,0 +1,25 @@
+title = "yydsxwh secret scan"
+
+[allowlist]
+description = "tests and examples"
+paths = ['''(^|/)[^/]*\.test\.(ts|tsx|mts|js)$''', '''(^|/)\.env\.example$''']
+
+[[rules]]
+id = "private-key"
+description = "Private key material"
+regex = '''-----BEGIN [A-Z ]*PRIVATE KEY-----'''
+
+[[rules]]
+id = "aliyun-access-key"
+description = "Aliyun access key id"
+regex = '''LTAI[a-zA-Z0-9]{12,}'''
+
+[[rules]]
+id = "aws-access-key"
+description = "AWS access key id"
+regex = '''AKIA[0-9A-Z]{16}'''
+
+[[rules]]
+id = "generic-ai-key"
+description = "Common AI provider key"
+regex = '''sk-[A-Za-z0-9]{20,}'''
