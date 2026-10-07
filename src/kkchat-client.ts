@@ -39,6 +39,14 @@ export type KkchatSendInput = {
   senderName?: string;
 };
 
+export type KkchatDirectContact = {
+  sub: string;
+  displayName: string;
+  avatarUrl: string;
+  kkNumber: number | null;
+  username: string | null;
+};
+
 export type KkchatConversationRef = {
   conversationId: string;
   href: string;
@@ -82,6 +90,11 @@ export class KkchatClient {
 
   unread(accountSub: string): Promise<{ accountSub: string; count: number }> {
     return this.request("/api/service/unread", { method: "GET", query: { accountSub } });
+  }
+
+  /** 最近私聊。不是好友关系，日事不能据此自动授权。 */
+  directContacts(accountSub: string): Promise<{ contacts: KkchatDirectContact[] }> {
+    return this.request("/api/service/contacts", { method: "GET", query: { accountSub } });
   }
 
   private async request<T>(path: string, init: { method: string; json?: unknown; query?: Record<string, string> }): Promise<T> {
