@@ -100,6 +100,14 @@ export const PRODUCT_REGISTRY: readonly ProductRecord[] = [
     note: "独立进程、独立 PostgreSQL。生产域名规划为 kkchat.yydsxwh.com，端口 3210。DNS 未挂上之前，门户仍使用这个 origin，不把聊天写回主站。",
   },
   {
+    id: "knowledge",
+    role: "product",
+    origin: "https://knowledge.yydsxwh.com",
+    repository: "yydsxwh/knowledge",
+    runtimeDependsOnMain: false,
+    note: "会员制知识社区。独立 Next 进程和 PostgreSQL。生产域名由部署配置决定，注册表记录规划入口。模板已入库，生产尚未安装。",
+  },
+  {
     id: "docs",
     role: "product",
     origin: "https://www.yydsxwh.com",
