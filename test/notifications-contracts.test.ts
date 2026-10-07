@@ -7,12 +7,18 @@ import {
   inspectWechatFieldMap,
   assertAudienceAllowed,
   assertSafeNotificationLink,
+  explainDeliveryStatus,
   forumReplyEventId,
   lowBalanceDedupeKey,
   mainlandPhone,
+  NOTIFICATION_EVENT_CATALOG,
+  NOTIFICATION_EVENT_TYPES,
   pickTemplateData,
+  preferenceCategoryFor,
   privacyViolation,
   routeFor,
+  suggestWechatFieldRows,
+  wechatPreferenceAllows,
   yuanFromCents,
 } from "../src/contracts/notifications";
 
@@ -113,6 +119,39 @@ test("站长私信只允许摘要字段，不能把整段聊天塞进微信", ()
   assert.equal(routeFor("SITE_OWNER_DIRECT_MESSAGE", "").wechat, true);
   assert.equal(routeFor("SITE_OWNER_DIRECT_MESSAGE", "").sms, false);
   assert.equal(routeFor("SITE_OWNER_DIRECT_MESSAGE", "").inApp, true);
+});
+
+test("事件目录覆盖全部事件，课程公告不带价格字段", () => {
+  assert.equal(NOTIFICATION_EVENT_TYPES.length, Object.keys(NOTIFICATION_EVENT_CATALOG).length);
+  const course = NOTIFICATION_EVENT_CATALOG.COURSE_TEACHER_ANNOUNCEMENT;
+  assert.equal(course.productId, "course");
+  assert.equal(course.preferenceCategory, "course");
+  assert.equal(preferenceCategoryFor("KKCHAT_MESSAGE_RECEIVED"), "chat");
+  assert.deepEqual(course.fields, ["courseName", "summary", "occurredAt"]);
+  assert.equal(course.fields.includes("availableBalance"), false);
+  assert.equal(routeFor("COURSE_TEACHER_ANNOUNCEMENT", "").wechat, true);
+  assert.equal(routeFor("COURSE_TEACHER_ANNOUNCEMENT", "").sms, false);
+  const picked = pickTemplateData("COURSE_TEACHER_ANNOUNCEMENT", {
+    courseName: "高数",
+    summary: "今晚课前看公告",
+    occurredAt: "10-03 18:00",
+    teacherCostCents: "1",
+  });
+  assert.equal(picked.ok, true);
+  if (picked.ok) assert.equal(picked.data.teacherCostCents, undefined);
+  const rows = suggestWechatFieldRows("COURSE_TEACHER_ANNOUNCEMENT");
+  assert.deepEqual(rows.map((row) => row.systemField), ["courseName", "summary", "occurredAt"]);
+  assert.equal(rows.some((row) => row.wechatField.startsWith("thing")), true);
+  assert.match(explainDeliveryStatus("SENT"), /不代表/);
+  assert.match(explainDeliveryStatus("NOT_CONFIGURED"), /微信公众平台/);
+});
+
+test("用户可以关掉聊天微信，站长告警仍可绕过偏好", () => {
+  const prefs = { inApp: true, wechat: true, sms: false, categories: { chat: false, course: true } };
+  assert.equal(wechatPreferenceAllows(prefs, "KKCHAT_MESSAGE_RECEIVED", true), false);
+  assert.equal(wechatPreferenceAllows(prefs, "COURSE_TEACHER_ANNOUNCEMENT", true), true);
+  assert.equal(wechatPreferenceAllows(prefs, "KKCHAT_MESSAGE_RECEIVED", false), true);
+  assert.equal(wechatPreferenceAllows({ inApp: true, wechat: false, sms: false }, "ACADEMIC_PRIVATE_ADMIN_ALERT", true), false);
 });
 
 test("站长字段映射拒绝重复、非法字段名和越权数据", () => {
