@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { KkchatClient, conversationHref, kkchatPublicOrigin } from "../src/kkchat-client";
+import type { LocationViewStatus } from "../src/contracts/guardian";
 import { DEFAULT_NOTIFICATION_ROUTES, NOTIFICATION_EVENT_FIELDS, isNotificationEventType } from "../src/contracts/notifications";
 
 test("KKChat 深链和公开地址", () => {
@@ -34,4 +35,21 @@ test("服务客户端把产品身份放在头里，不把凭证写进地址", as
   assert.equal(DEFAULT_NOTIFICATION_ROUTES.KKCHAT_MESSAGE_RECEIVED.sms, false);
   assert.equal(DEFAULT_NOTIFICATION_ROUTES.KKCHAT_MESSAGE_RECEIVED.wechat, true);
   assert.deepEqual(NOTIFICATION_EVENT_FIELDS.KKCHAT_MESSAGE_RECEIVED, ["senderName", "excerpt", "occurredAt"]);
+  const status: LocationViewStatus = "stale";
+  assert.equal(status, "stale");
+});
+
+test("最近私聊请求打到 contacts，响应里没有手机号字段", async () => {
+  const client = new KkchatClient({
+    baseUrl: "https://kkchat.example",
+    serviceToken: "secret-token",
+    sourceProduct: "rishi",
+    fetchImpl: (async (input: RequestInfo | URL) => {
+      assert.match(String(input), /\/api\/service\/contacts\?accountSub=/);
+      return new Response(JSON.stringify({ contacts: [{ sub: "usr_b", displayName: "乙", avatarUrl: "", kkNumber: 10086, username: "bob" }] }), { status: 200 });
+    }) as typeof fetch,
+  });
+  const body = await client.directContacts("usr_a");
+  assert.equal(body.contacts[0]?.username, "bob");
+  assert.equal("phone" in (body.contacts[0] || {}), false);
 });
