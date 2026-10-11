@@ -258,6 +258,8 @@ export type PublicPaymentView = {
   method: PaymentMethod;
   subject: string;
   status: PaymentStatus;
+  /** 付款人自己填的备注 */
+  payerNote: string;
   expiresAt: string | null;
   paidAt: string | null;
 };
@@ -267,9 +269,10 @@ export type CollectionCheckoutResponse = {
   action: PaymentAction;
   /**
    * 查询这一笔支付状态的凭证，只在首次创建时返回。
+   * 重复提交同一幂等键时为 null：调用方应使用第一次拿到的 claim。
    * 不是服务 token，也看不了别的订单。
    */
-  claim: string;
+  claim: string | null;
 };
 
 export type PaymentListQuery = {
