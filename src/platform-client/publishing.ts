@@ -16,10 +16,15 @@ export type CreatePublishJobInput = {
   idempotencyKey: string;
   collection: PublishingCollection;
   capability?: ChannelCapability;
-  /** 与 collection.items 一一对应的 PNG，base64，不含 data: 前缀。 */
-  qrPngBase64: string[];
+  /**
+   * 调用方传来的二维码不再作为草稿图片。
+   * platform 会按校验后的详情地址自己生成 PNG。此字段保留只为兼容旧调用，服务端忽略。
+   */
+  qrPngBase64?: string[];
   footerQrPngBase64?: string;
   coverPngBase64?: string;
+  /** 合集底部入口，例如老师匹配页。不填则不生成底部码。 */
+  footerTargetUrl?: string;
   force?: boolean;
 };
 

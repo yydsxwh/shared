@@ -67,4 +67,15 @@ export type ServiceIdentity = {
 /** 凭证材料本身不得进入日志或管理面响应 */
 export type ServiceCredential = ServiceIdentity & {
   token: string;
+  /**
+   * 未写 scope、写成 * 或 all。
+   * 这种凭证仍兼容旧模块。生产环境的 publishing 不接受它，必须显式写上 publishing。
+   */
+  scopesImplicit?: boolean;
 };
+
+/** 没写 scope、*、all 都算隐式全开。显式列出 publishing 才算授权发布。 */
+export function serviceScopesAreImplicit(raw: string | undefined) {
+  const text = raw?.trim();
+  return !text || text === "*" || text.toLowerCase() === "all";
+}

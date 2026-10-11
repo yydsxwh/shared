@@ -52,6 +52,8 @@ export const EXPORT_JOB_STATUSES = [
   "SYNCED",
   "FAILED",
   "BLOCKED",
+  /** 草稿请求已发出但没有明确回执。不要自动再调用 draft/add。 */
+  "NEEDS_REVIEW",
 ] as const;
 export type ExportJobStatus = (typeof EXPORT_JOB_STATUSES)[number];
 
@@ -250,6 +252,11 @@ export type PublishParseResult<T> =
 
 export function publishingTheme(key: string): PublishingTheme {
   return PUBLISHING_THEMES.find((item) => item.key === key) ?? PUBLISHING_THEMES[0]!;
+}
+
+/** 跨产品时 sourceId 会撞车，覆写和二维码都用这个完整键。 */
+export function contentSourceKey(ref: { product: string; sourceType: string; sourceId: string }) {
+  return `${ref.product}:${ref.sourceType}:${ref.sourceId}`;
 }
 
 export function isPublishingPresetKey(value: string): value is PublishingPresetKey {

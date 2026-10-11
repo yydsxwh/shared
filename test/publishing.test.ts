@@ -110,13 +110,16 @@ test("shows a real link only after external-link capability is confirmed", () =>
     capability: { ...DEFAULT_WECHAT_CAPABILITY, canLinkMiniProgram: "yes" },
     mode: "wechat",
   });
-  assert.match(withMini.html, /pages\/post\/index\?id=a/);
+  assert.match(withMini.html, /小程序入口尚未接入/);
+  assert.doesNotMatch(withMini.html, /pages\/post/);
+  assert.doesNotMatch(withMini.html, /<mp-miniprogram/);
   const hidden = renderWechatArticle({
     collection: collection([item("a", { miniProgram: { appId: "wx1234567890abcdef", path: "pages/post/index?id=a" } })]),
     qrImageUrls: ["https://mmbiz.qpic.cn/a.png"],
     mode: "wechat",
   });
   assert.doesNotMatch(hidden.html, /pages\/post/);
+  assert.match(hidden.html, /请长按本篇二维码/);
 });
 
 test("stacks cards and drops the swipe hint when phones cannot keep the gesture", () => {
@@ -153,6 +156,15 @@ test("escapes text, keeps traditional chinese, and omits a missing comment count
   assert.doesNotMatch(rendered.html, /<script>/);
   assert.doesNotMatch(rendered.html, /evil\.example/);
   assert.match(rendered.html, /https:\/\/mmbiz\.qpic\.cn\/nav\.png/);
+  const droppedCdn = renderWechatArticle({
+    collection: collection([
+      item("cdn", { bodyBlocks: [{ kind: "image", url: "https://cdn.yydsxwh.com/private.png?access_token=abc", alt: "签名图" }] }),
+    ]),
+    qrImageUrls: ["https://mmbiz.qpic.cn/nav.png"],
+    mode: "wechat",
+  });
+  assert.doesNotMatch(droppedCdn.html, /cdn\.yydsxwh\.com/);
+  assert.doesNotMatch(droppedCdn.html, /access_token/);
   const preview = renderWechatArticle({
     collection: collection([
       item("a", { images: [{ url: "https://cdn.yydsxwh.com/post.png", alt: "配图" }], bodyBlocks: [{ kind: "image", url: "https://cdn.yydsxwh.com/post.png", alt: "作者上传的码" }] }),

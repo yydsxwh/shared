@@ -77,7 +77,8 @@ function contentImageAllowed(url: string, mode: "preview" | "wechat") {
   if (mode === "preview") return true;
   try {
     const host = new URL(url).hostname.toLowerCase();
-    return host === "mmbiz.qpic.cn" || host === "mmbiz.qlogo.cn" || host === "yydsxwh.com" || host.endsWith(".yydsxwh.com");
+    // 只留已经上传到微信的图。站点 CDN 和带签名的 OSS 不写进草稿，避免防盗链空白或把临时凭证带出去。
+    return host === "mmbiz.qpic.cn" || host === "mmbiz.qlogo.cn";
   } catch {
     return false;
   }
@@ -107,9 +108,14 @@ function detailLink(item: PublishableContent, capability: ChannelCapability) {
   return `<p style="margin:8px 0 0;"><a href="${escapeHtml(item.publicWebUrl)}">查看原帖及评论</a></p>`;
 }
 
-function miniProgramLine(item: PublishableContent, capability: ChannelCapability) {
-  if (capability.canLinkMiniProgram !== "yes" || !item.miniProgram) return "";
-  return `<p style="margin:8px 0 0;">小程序详情：${escapeHtml(item.miniProgram.path)}</p>`;
+/**
+ * 公众号正文里的小程序入口必须是微信认可的卡片，而且要先完成关联和真机确认。
+ * 路径纯文本点不了，这里不输出 path，避免被当成已经接好的按钮。
+ * canLinkMiniProgram 即使被标成 yes，在官方标签接入并验过之前也不渲染入口。
+ */
+function miniProgramLine(item: PublishableContent, _capability: ChannelCapability) {
+  if (!item.miniProgram) return "";
+  return `<p style="margin:8px 0 0;">小程序入口尚未接入，请长按本篇二维码。</p>`;
 }
 
 function metaLine(item: PublishableContent, muted: string) {
