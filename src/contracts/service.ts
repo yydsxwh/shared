@@ -24,6 +24,8 @@ export const PLATFORM_SERVICE_SCOPES = [
   "config",
   /** 外部通知发送。浏览器不能拿这个 scope。 */
   "notifications",
+  /** 内容导出与公众号草稿。浏览器不能拿这个 scope，也不能用它群发。 */
+  "publishing",
 ] as const;
 
 export type PlatformServiceScope = (typeof PLATFORM_SERVICE_SCOPES)[number];
