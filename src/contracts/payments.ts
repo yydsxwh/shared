@@ -111,18 +111,48 @@ export type RefundRequest = {
   reason?: string;
 };
 
+/**
+ * 退款状态。
+ * - PENDING：已向渠道提交或渠道处理中，额度仍占用
+ * - SUCCEEDED：渠道确认退回
+ * - FAILED：渠道明确拒绝。只有这个状态释放额度
+ * - PENDING_RECONCILIATION：超时、断连或应答无法判断。额度继续占用，必须用原来的 clientRefundNo 查单
+ *
+ * 旧客户端如果只认识前三种，遇到不认识的状态也要当成仍占用额度，不能当成失败后再退一笔。
+ */
+export const REFUND_STATUSES = [
+  "PENDING",
+  "SUCCEEDED",
+  "FAILED",
+  "PENDING_RECONCILIATION",
+] as const;
+export type RefundStatus = (typeof REFUND_STATUSES)[number];
+
+export function refundOccupiesQuota(status: string): boolean {
+  return status !== "FAILED";
+}
+
 export type RefundRecord = {
   refundId: string;
   paymentId: string;
   clientRefundNo: string;
   amountCents: number;
-  status: "PENDING" | "SUCCEEDED" | "FAILED";
+  status: RefundStatus;
   /** 发起退款的登录用户；系统补偿可为空 */
   operatorId: string | null;
   /** 渠道退款单号，受理后才有 */
   providerRefundId: string | null;
   reason: string | null;
   createdAt: string;
+};
+
+/** 原支付、已退、退款处理中（含结果未知）和剩余可退。剩余不会把未知当成失败。 */
+export type RefundSummary = {
+  paidAmountCents: number;
+  succeededAmountCents: number;
+  reservedAmountCents: number;
+  remainingAmountCents: number;
+  hasUnknown: boolean;
 };
 
 /**
@@ -154,8 +184,13 @@ export type CollectionAmountMode = (typeof COLLECTION_AMOUNT_MODES)[number];
 export const COLLECTION_USAGE_MODES = ["SINGLE", "REUSABLE"] as const;
 export type CollectionUsageMode = (typeof COLLECTION_USAGE_MODES)[number];
 
-/** PAID 只用于单次入口已有成功支付；EXPIRED 由 expiresAt 推导，也可被写成状态 */
-export const COLLECTION_STATUSES = ["ACTIVE", "DISABLED", "EXPIRED", "PAID"] as const;
+/**
+ * PAID：单次入口已经成功收过，退款后也不会自动重新打开。
+ * EXPIRED：由 expiresAt 推导。
+ * RECONCILING：本地看到过期，但渠道是否已支付还不能确认，入口继续占住。
+ * 旧客户端遇到不认识的状态时不要放行付款。
+ */
+export const COLLECTION_STATUSES = ["ACTIVE", "DISABLED", "EXPIRED", "PAID", "RECONCILING"] as const;
 export type CollectionStatus = (typeof COLLECTION_STATUSES)[number];
 
 /** 公众收银台可选渠道。MOCK 永远不出现在这里。 */

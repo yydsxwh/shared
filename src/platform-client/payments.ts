@@ -19,6 +19,7 @@ import type {
   PublicPaymentView,
   RefundRecord,
   RefundRequest,
+  RefundSummary,
 } from "../contracts/payments";
 import type { PlatformHttpClient } from "./http";
 
@@ -51,6 +52,18 @@ export class PaymentClient {
       if ((error as { code?: string })?.code === "NOT_FOUND") return null;
       throw error;
     }
+  }
+
+  refundSummary(paymentId: string): Promise<RefundSummary> {
+    return this.http.request(`/payments/${encodeURIComponent(paymentId)}/refund-summary`);
+  }
+
+  /** 用原退款单号向渠道查结果。不会新开一笔退款。 */
+  reconcileRefund(paymentId: string, clientRefundNo: string): Promise<RefundRecord> {
+    return this.http.request(`/payments/${encodeURIComponent(paymentId)}/refunds/reconcile`, {
+      method: "POST",
+      json: { clientRefundNo },
+    });
   }
 
   refund(paymentId: string, input: RefundRequest): Promise<RefundRecord> {
