@@ -5,6 +5,7 @@ import {
   centsToYuanString,
   isValidYuanInput,
   yuanToCents,
+  yuanToPaymentCents,
 } from "../src/utils/money";
 
 test("元转分用字符串解析，避开 19.9 * 100 的浮点误差", () => {
@@ -19,6 +20,14 @@ test("非法金额直接抛错，不静默按 0 入库", () => {
   assert.throws(() => yuanToCents("1.234"));
   assert.throws(() => yuanToCents("abc"));
   assert.throws(() => yuanToCents(""));
+});
+
+test("收款金额拒绝 0 元和超过上限", () => {
+  assert.equal(yuanToPaymentCents("0.01"), 1);
+  assert.equal(yuanToPaymentCents("19.90"), 1990);
+  assert.throws(() => yuanToPaymentCents("0"));
+  assert.throws(() => yuanToPaymentCents("0.001"));
+  assert.throws(() => yuanToPaymentCents("500000.01"));
 });
 
 test("金额校验与回填", () => {

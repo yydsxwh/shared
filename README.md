@@ -55,7 +55,8 @@ platform API 契约与 SDK、Design Tokens。这里是这些代码的唯一来�
 | `contracts/storage` | 文件、namespace 策略、签名上传 / 分片 / 下载 |
 | `contracts/catalog` | 产品目录（机器可读事实，不含运营文案） |
 | `contracts/releases` | Release / ReleaseAsset / latest 查询 / 下载 |
-| `contracts/payments` | 支付单、支付动作、退款、履约事件 |
+| `contracts/payments` | 支付单、收款入口、支付动作、退款、履约事件 |
+| `@yydsxwh/shared/client/cashier-env` | 收银台在微信 / 支付宝 / 系统浏览器中的调起判断（无密钥） |
 
 ### platform SDK
 

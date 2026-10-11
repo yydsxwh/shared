@@ -67,6 +67,10 @@ export type RequestOptions = {
   actorId?: string | null;
   requestId?: string;
   signal?: AbortSignal;
+  /**
+   * 额外请求头。不能覆盖 Authorization：服务凭证只来自构造客户端时的环境变量。
+   */
+  headers?: Record<string, string>;
 };
 
 const DEFAULT_TIMEOUT_MS = 15_000;
@@ -101,6 +105,10 @@ export class PlatformHttpClient {
     const actor = options.actorId !== undefined ? options.actorId : this.actorId;
     if (actor) headers[PLATFORM_ACTOR_HEADER] = actor;
     if (options.requestId) headers[PLATFORM_REQUEST_ID_HEADER] = options.requestId;
+    for (const [key, value] of Object.entries(options.headers ?? {})) {
+      if (key.toLowerCase() === "authorization") continue;
+      headers[key.toLowerCase()] = value;
+    }
 
     let body = options.body;
     if (options.json !== undefined) {
