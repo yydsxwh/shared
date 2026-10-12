@@ -3,6 +3,11 @@
  * 用字符串解析避免 19.9 * 100 浮点误差。
  */
 
+import {
+  PAYMENT_AMOUNT_MAX_CENTS,
+  PAYMENT_AMOUNT_MIN_CENTS,
+} from "../contracts/payments";
+
 /** 校验元金额字符串：非负、最多两位小数 */
 export function isValidYuanInput(value: string | number): boolean {
   const s = String(value ?? "").trim();
@@ -26,6 +31,21 @@ export function yuanToCents(value: string | number): number {
   const cents = Number(intPart) * 100 + Number(frac);
   if (!Number.isFinite(cents) || cents < 0) {
     throw new Error("价格无效");
+  }
+  return cents;
+}
+
+/**
+ * 收款金额：至少 0.01 元，且不超过单笔硬上限。
+ * 0 元不是一笔支付；超过上限先拒绝，避免打到渠道才失败。
+ */
+export function yuanToPaymentCents(value: string | number): number {
+  const cents = yuanToCents(value);
+  if (cents < PAYMENT_AMOUNT_MIN_CENTS) {
+    throw new Error("金额至少为 0.01 元");
+  }
+  if (cents > PAYMENT_AMOUNT_MAX_CENTS) {
+    throw new Error("单笔金额超过上限");
   }
   return cents;
 }
