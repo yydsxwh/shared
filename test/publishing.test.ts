@@ -82,8 +82,6 @@ test("renders 20 and 50 posts vertically and splits oversized articles", () => {
     const total = rendered.batches.reduce((sum, batch) => sum + (batch.match(/data-card="item"/g)?.length ?? 0), 0);
     assert.equal(total, count);
   }
-  const huge = item("long", { summary: "很长".repeat(400), bodyBlocks: [{ kind: "paragraph", text: "段落".repeat(400) }] });
-  const many = [huge, huge && item("next")].filter(Boolean) as PublishableContent[];
   const split = renderWechatArticle({
     collection: collection([
       item("long", { summary: "甲".repeat(500), bodyBlocks: [{ kind: "paragraph", text: "乙".repeat(800) }] }),

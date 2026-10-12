@@ -113,7 +113,7 @@ function detailLink(item: PublishableContent, capability: ChannelCapability) {
  * 路径纯文本点不了，这里不输出 path，避免被当成已经接好的按钮。
  * canLinkMiniProgram 即使被标成 yes，在官方标签接入并验过之前也不渲染入口。
  */
-function miniProgramLine(item: PublishableContent, _capability: ChannelCapability) {
+function miniProgramLine(item: PublishableContent) {
   if (!item.miniProgram) return "";
   return `<p style="margin:8px 0 0;">小程序入口尚未接入，请长按本篇二维码。</p>`;
 }
@@ -147,7 +147,7 @@ ${metaLine(item, muted)}
 ${item.summary ? `<p style="margin:0 0 8px;line-height:1.7;">${escapeHtml(item.summary)}</p>` : ""}
 ${paragraphs(item.bodyBlocks, input.mode)}
 ${detailLink(item, input.capability)}
-${miniProgramLine(item, input.capability)}
+${miniProgramLine(item)}
 <p style="margin:12px 0 0;color:${accent};font-size:14px;">${hint}</p>
 </section>`;
   const back = `<section style="display:inline-block;width:100%;vertical-align:top;white-space:normal;box-sizing:border-box;padding:16px;text-align:center;">

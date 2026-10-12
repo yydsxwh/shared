@@ -264,7 +264,7 @@ export function isPublishingPresetKey(value: string): value is PublishingPresetK
 }
 
 function clip(value: unknown, max: number) {
-  return String(value ?? "").replace(/\u0000/g, "").trim().slice(0, max);
+  return String(value ?? "").replaceAll("\u0000", "").trim().slice(0, max);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
