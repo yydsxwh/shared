@@ -114,9 +114,10 @@ describe("tab session decisions", () => {
     assert.equal(isTabContextId("short"), false);
     assert.equal(isTabContextId(TAB_A), true);
     assert.equal(multiAccountTabsEnabled({ MULTI_ACCOUNT_TABS: "0" }), false);
+    assert.equal(multiAccountTabsEnabled({ MULTI_ACCOUNT_TABS: "false" }), false);
     assert.equal(multiAccountTabsEnabled({}), false);
     assert.equal(multiAccountTabsEnabled({ MULTI_ACCOUNT_TABS: "1" }), true);
-    assert.equal(multiAccountTabsEnabled({ MULTI_ACCOUNT_TABS: "true" }), false);
+    assert.equal(multiAccountTabsEnabled({ MULTI_ACCOUNT_TABS: "true" }), true);
   });
 
   it("keeps five tabs on five users and ignores the shared cookie once a device exists", () => {
