@@ -9,6 +9,7 @@
  * 不实现账号系统，也不要在这里或 platform 里再造第二套统一身份。
  *
  * 目标形态：产品 → OIDC → account。
+ * 同一浏览器的多个标签页用 `auth/tab-session` 选择账号，不把共享 Cookie 当成唯一身份。
  *
  * NEEDS_ACCOUNT_INTEGRATION：
  * 主站与软件专栏目前仍各持 cookie session、密码、短信与微信登录实现，
