@@ -13,6 +13,7 @@ import { CatalogClient } from "./catalog";
 import { ConfigClient } from "./config";
 import { NotificationClient } from "./notifications";
 import { PaymentClient } from "./payments";
+import { PublishingClient } from "./publishing";
 import { ReleaseClient } from "./releases";
 import { StorageClient } from "./storage";
 
@@ -25,6 +26,8 @@ export type { ConfigResolverOptions, ConfigSnapshotStore } from "./config";
 export { NotificationClient } from "./notifications";
 export type { NotificationProviderReport, NotificationStatusReport, NotificationTestResult } from "./notifications";
 export { PaymentClient } from "./payments";
+export { PublishingClient } from "./publishing";
+export type { CreatePublishJobInput, PublishJobResponse, PublishingStatus } from "./publishing";
 export { ReleaseClient } from "./releases";
 export { StorageClient } from "./storage";
 
@@ -37,6 +40,7 @@ export type PlatformClient = {
   catalog: CatalogClient;
   releases: ReleaseClient;
   payments: PaymentClient;
+  publishing: PublishingClient;
   /** 派生一个代表指定用户的客户端，避免请求间共享 actor 造成串号 */
   withActor(actorId: string | null): PlatformClient;
 };
@@ -60,6 +64,7 @@ function fromHttp(
     catalog: new CatalogClient(http),
     releases: new ReleaseClient(http),
     payments: new PaymentClient(http),
+    publishing: new PublishingClient(http),
     withActor: (actorId) =>
       fromHttp(http.withActor(actorId), { ...options, actorId }),
   };

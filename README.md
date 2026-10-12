@@ -56,6 +56,9 @@ platform API 契约与 SDK、Design Tokens。这里是这些代码的唯一来�
 | `contracts/catalog` | 产品目录（机器可读事实，不含运营文案） |
 | `contracts/releases` | Release / ReleaseAsset / latest 查询 / 下载 |
 | `contracts/payments` | 支付单、支付动作、退款、履约事件 |
+| `contracts/publishing` | 可发布内容、合集、渠道能力、导出任务 |
+| `publishing/html` | 公众号纵向卡片与单篇横滑的纯 HTML |
+| `publishing/targets` | 详情地址白名单与逐篇二维码目标 |
 
 ### platform SDK
 
