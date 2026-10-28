@@ -90,6 +90,8 @@ const reply = await platform.ai.chat({
 
 `@yydsxwh/shared/design/tokens` —— 颜色语义、间距、圆角、字号阶梯、控件尺寸。
 
+`@yydsxwh/shared/theme/product-appearance` —— 商城和辅导系统跟随主站时使用的公开主题契约：版本、校验、缓存时限、变量映射。这里没有主站数据库和装扮编辑器。`0.16.0` 还没有打 tag，使用方暂时内嵌同一份文件，打 tag 后再改依赖。
+
 原则是 **品牌一致，产品体验独立**：各端共享同一套品牌变量，但不强求长得一样，
 具体组件与布局仍归各产品。token 名与主站现有 CSS 变量（`--ink`、`--muted`、
 `--brand`、`--line`）对齐，接入时不需要改样式表；装扮产品的运行时覆盖依然生效。
