@@ -25,6 +25,7 @@ export const CONFIG_PRODUCT_IDS = [
   "mathcode",
   "valorant",
   "kkchat",
+  "knowledge",
   "xiangqi",
 ] as const;
 export type ProductId = (typeof CONFIG_PRODUCT_IDS)[number];
@@ -51,6 +52,7 @@ const CLIENT_TO_PRODUCT: Record<string, ProductId> = {
   mathcode: "mathcode",
   valorant: "valorant",
   kkchat: "kkchat",
+  knowledge: "knowledge",
   xiangqi: "xiangqi",
 };
 
@@ -355,6 +357,7 @@ export const PRODUCT_GROUP_USAGE: Record<ProductId, readonly ConfigGroup[]> = {
   mathcode: ["ai", "payment", "links"],
   valorant: ["storage", "links"],
   kkchat: ["links", "notifications"],
+  knowledge: ["links", "notifications"],
   xiangqi: ["ai", "links"],
 };
 
