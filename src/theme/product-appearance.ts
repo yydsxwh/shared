@@ -313,7 +313,7 @@ export function isCssColor(value: string): boolean {
 function isSafeShadow(value: string): boolean {
   if (value.length === 0 || value.length > 180) return false;
   if (/url|expression|javascript|@|<|>/i.test(value)) return false;
-  return /^[0-9a-zA-Z\s,().%#+\-]+$/.test(value);
+  return /^[0-9a-zA-Z\s,().%#+-]+$/.test(value);
 }
 
 function sanitizeFontFamily(value: unknown, fallback: string): string {
@@ -321,7 +321,7 @@ function sanitizeFontFamily(value: unknown, fallback: string): string {
   if (!text || text.length > 240) return fallback;
   if (/url|expression|javascript|@|<|>|\{|\}|;|\\/i.test(text)) return fallback;
   const withoutVars = text.replace(/var\(--[a-z0-9-]+\)/g, "x");
-  return /^[\w\s,"'.\-]+$/.test(withoutVars) ? text : fallback;
+  return /^[\w\s,"'.-]+$/.test(withoutVars) ? text : fallback;
 }
 
 function clampFontSize(value: unknown, fallback: number): number {
