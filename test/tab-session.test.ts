@@ -7,12 +7,14 @@ import {
   maskEmail,
   maskPhone,
   multiAccountTabsEnabled,
+  legacySessionAllowed,
   planAddAccount,
   planAuthorize,
   planLogout,
   planResume,
   planRoleSwitch,
   resolveAccess,
+  roleFor,
   tabBootstrapScript,
   type AccountRecord,
   type BrokerState,
@@ -114,7 +116,8 @@ describe("tab session decisions", () => {
     assert.equal(isTabContextId("short"), false);
     assert.equal(isTabContextId(TAB_A), true);
     assert.equal(multiAccountTabsEnabled({ MULTI_ACCOUNT_TABS: "0" }), false);
-    assert.equal(multiAccountTabsEnabled({}), true);
+    assert.equal(multiAccountTabsEnabled({}), false);
+    assert.equal(multiAccountTabsEnabled({ MULTI_ACCOUNT_TABS: "1" }), true);
   });
 
   it("keeps five tabs on five users and ignores the shared cookie once a device exists", () => {
@@ -293,6 +296,28 @@ describe("tab session decisions", () => {
     const script = tabBootstrapScript();
     assert.match(script, /x-yyds-tab/);
     assert.match(script, /sessionStorage/);
+    assert.match(script, /location\.origin/);
     assert.doesNotMatch(script, /access_token|refresh_token|client_secret/i);
+  });
+
+  it("does not promote a stale workspace to the highest role", () => {
+    const both = account({
+      sessionId: "sess-admin",
+      userId: "usr_admin",
+      grantedRoles: ["ADMIN", "STUDENT"],
+      defaultRole: "ADMIN",
+    });
+    assert.equal(roleFor(both, "TEACHER"), null);
+    const stale = resolveAccess(
+      state([both], {
+        tabs: [{ contextId: TAB_A, sessionId: both.sessionId, activeRole: "TEACHER", revoked: false }],
+      }),
+      { tabHeader: TAB_A },
+    );
+    assert.equal(stale.kind, "ready");
+    if (stale.kind === "ready") assert.deepEqual(stale.permissionRoles, []);
+    assert.equal(legacySessionAllowed("absent"), true);
+    assert.equal(legacySessionAllowed("active"), false);
+    assert.equal(legacySessionAllowed("revoked"), false);
   });
 });
