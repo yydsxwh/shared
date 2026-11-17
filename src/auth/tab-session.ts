@@ -489,10 +489,17 @@ window.addEventListener("pagehide",function(event){
     if(cur&&cur.instance===instance) localStorage.removeItem(beatKey);
   }catch(e){}
 });
+function sameOrigin(input){
+  try{
+    var url=typeof input==="string"?input:(typeof Request!=="undefined"&&input instanceof Request?input.url:String(input));
+    return new URL(url,location.href).origin===location.origin;
+  }catch(e){return false;}
+}
 var orig=window.fetch;
 if(typeof orig==="function"){
   window.fetch=function(input,init){
-    var headers=new Headers(init&&init.headers?init.headers:undefined);
+    if(!sameOrigin(input)) return orig.apply(this,arguments);
+    var headers=new Headers(init&&init.headers!==undefined?init.headers:(typeof Request!=="undefined"&&input instanceof Request?input.headers:undefined));
     if(!headers.has(HEADER)) headers.set(HEADER,id);
     var next=Object.assign({},init||{},{headers:headers});
     if(typeof Request!=="undefined"&&input instanceof Request) return orig.call(this,new Request(input,next));
