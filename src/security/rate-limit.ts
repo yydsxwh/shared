@@ -1,17 +1,19 @@
 /**
  * 登录与敏感接口的限流。
  *
- * 默认用进程内窗口，单机 systemd 够用。
- * RATE_LIMIT_BACKEND=redis 时改走调用方注入的 Redis 客户端。
- * Redis 出错必须退回内存计数，不能让登录接口一直 500。
+ * 默认用进程内窗口。RATE_LIMIT_BACKEND=redis 时改走调用方注入的 Redis。
+ * 计数和过期必须同一次完成，避免只 INCR 成功、进程在 PEXPIRE 前退出导致键永不过期。
+ * Redis 出错时，普通入口退回有上限的内存计数；短信和无法保证预算的敏感写入传 failClosed，短暂拒绝。
  */
 
 export type RateLimitDecision = {
   ok: boolean;
   remaining: number;
   retryAfterSec: number;
-  /** Redis 不可用、已经改走内存时为 true，供安全概览展示 */
+  /** Redis 不可用、已经改走内存或拒绝时为 true */
   degraded?: boolean;
+  /** 后端不可用且本入口选择拒绝，而不是额度用尽 */
+  unavailable?: boolean;
 };
 
 export type RateLimitConsumeInput = {
@@ -19,6 +21,8 @@ export type RateLimitConsumeInput = {
   limit: number;
   windowSec: number;
   now?: number;
+  /** Redis 不可用时拒绝，而不是退回内存 */
+  failClosed?: boolean;
 };
 
 export interface RateLimitStore {
@@ -58,6 +62,12 @@ export class MemoryRateLimitStore implements RateLimitStore {
     };
   }
 
+  count(key: string, now = Date.now()): number {
+    const hit = this.buckets.get(key);
+    if (!hit || hit.resetAt <= now) return 0;
+    return hit.count;
+  }
+
   reset(key: string) {
     this.buckets.delete(key);
   }
@@ -74,13 +84,36 @@ export class MemoryRateLimitStore implements RateLimitStore {
   }
 }
 
-/** 只依赖 INCR / PEXPIRE / PTTL / DEL，方便接 ioredis，不把客户端打进公共包。 */
+/** 只依赖 INCR / PEXPIRE / PTTL / DEL / EVAL / GET，方便接 ioredis。 */
 export type RedisRateLimitClient = {
   incr(key: string): Promise<number>;
   pexpire(key: string, milliseconds: number): Promise<number>;
   pttl(key: string): Promise<number>;
   del(key: string): Promise<number>;
+  eval?(script: string, numkeys: number, ...args: Array<string | number>): Promise<unknown>;
+  get?(key: string): Promise<string | null>;
 };
+
+/** INCR 与 PEXPIRE 放在同一段脚本里，TTL 丢失时补上，避免键永不过期。 */
+export const RATE_LIMIT_WINDOW_SCRIPT = `
+local key = KEYS[1]
+local windowMs = tonumber(ARGV[1])
+local count = redis.call('INCR', key)
+local ttl = redis.call('PTTL', key)
+if count == 1 or ttl < 0 then
+  redis.call('PEXPIRE', key, windowMs)
+  ttl = windowMs
+end
+return {count, ttl}
+`;
+
+function decisionFromCount(count: number, limit: number, ttlMs: number, windowSec: number): RateLimitDecision {
+  if (count > limit) {
+    const retryAfterSec = Math.max(1, Math.ceil((ttlMs > 0 ? ttlMs : windowSec * 1000) / 1000));
+    return { ok: false, remaining: 0, retryAfterSec };
+  }
+  return { ok: true, remaining: Math.max(0, limit - count), retryAfterSec: 0 };
+}
 
 export class RedisRateLimitStore implements RateLimitStore {
   constructor(
@@ -91,21 +124,30 @@ export class RedisRateLimitStore implements RateLimitStore {
 
   async consume(input: RateLimitConsumeInput): Promise<RateLimitDecision> {
     const redisKey = `rl:${input.key}`;
+    const windowMs = input.windowSec * 1000;
     try {
-      const count = await this.redis.incr(redisKey);
-      if (count === 1) {
-        await this.redis.pexpire(redisKey, input.windowSec * 1000);
-      }
-      if (count > input.limit) {
-        const ttl = await this.redis.pttl(redisKey);
-        const retryAfterSec = Math.max(1, Math.ceil((ttl > 0 ? ttl : input.windowSec * 1000) / 1000));
-        return { ok: false, remaining: 0, retryAfterSec };
-      }
-      return { ok: true, remaining: Math.max(0, input.limit - count), retryAfterSec: 0 };
+      const { count, ttlMs } = await this.increment(redisKey, windowMs);
+      return decisionFromCount(count, input.limit, ttlMs, input.windowSec);
     } catch (error) {
       this.onDegrade?.(error);
+      if (input.failClosed) {
+        return { ok: false, remaining: 0, retryAfterSec: 30, degraded: true, unavailable: true };
+      }
       const decision = await this.fallback.consume(input);
       return { ...decision, degraded: true };
+    }
+  }
+
+  async count(key: string): Promise<number | null> {
+    if (!this.redis.get) return null;
+    try {
+      const raw = await this.redis.get(`rl:${key}`);
+      if (raw === null || raw === undefined || raw === "") return 0;
+      const count = Number(raw);
+      return Number.isFinite(count) ? count : 0;
+    } catch (error) {
+      this.onDegrade?.(error);
+      return null;
     }
   }
 
@@ -116,6 +158,26 @@ export class RedisRateLimitStore implements RateLimitStore {
       this.onDegrade?.(error);
     }
     await this.fallback.reset(key);
+  }
+
+  private async increment(redisKey: string, windowMs: number): Promise<{ count: number; ttlMs: number }> {
+    if (this.redis.eval) {
+      const raw = await this.redis.eval(RATE_LIMIT_WINDOW_SCRIPT, 1, redisKey, String(windowMs));
+      const pair = Array.isArray(raw) ? raw : [];
+      const count = Number(pair[0]);
+      const ttlMs = Number(pair[1]);
+      if (!Number.isFinite(count) || !Number.isFinite(ttlMs)) {
+        throw new Error("rate-limit script returned an unusable result");
+      }
+      return { count, ttlMs };
+    }
+    const count = await this.redis.incr(redisKey);
+    let ttlMs = await this.redis.pttl(redisKey);
+    if (count === 1 || ttlMs < 0) {
+      await this.redis.pexpire(redisKey, windowMs);
+      ttlMs = windowMs;
+    }
+    return { count, ttlMs };
   }
 }
 
